@@ -1,27 +1,29 @@
 {
-	"name": "stlics-js",
+	"name": "fwl",
 	"version": "1.0.0",
-	"description": "CSP Library",
-	"productName": "Stlics-JS",
-	"scripts": {
-		"start": "gulp"
-	},
+	"description": "Flexible Widget Layout",
+	"license": "MIT",
+	"author": "Takuto Yanagida",
+	"homepage": "https://github.com/takty/fwl#readme",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/takty/stlics-js.git"
+		"url": "git+https://github.com/takty/fwl.git"
 	},
-	"author": "Takuto Yanagida",
-	"license": "MIT",
-	"homepage": "https://github.com/takty/stlics-js#readme",
+	"bugs": {
+		"url": "https://github.com/takty/fwl/issues"
+	},
+	"source": "src/index.js",
+	"main": "dist/fwl.js",
+	"module": "dist/fwl.esm.js",
+	"scripts": {
+		"docs": "parcel src/_docs/*.html --dist-dir docs  --public-url /fwl/",
+		"dev": "parcel watch",
+		"build": "parcel build"
+	},
 	"dependencies": {
-		"@babel/core": "^7.21.3",
-		"@babel/preset-env": "^7.20.2",
-		"gulp": "^4.0.2",
-		"gulp-babel": "^8.0.0",
-		"gulp-changed": "^4.0.3",
-		"gulp-plumber": "^1.2.1",
-		"gulp-preprocess": "^4.0.2",
-		"gulp-rename": "^2.0.0",
-		"gulp-terser": "^2.1.0"
+		"stlics": "github:takty/stlics"
+	},
+	"devDependencies": {
+		"parcel": "^2.8.3"
 	}
 }
