@@ -12,7 +12,7 @@
 	"bugs": {
 		"url": "https://github.com/takty/fwl/issues"
 	},
-	"source": "src/index.js",
+	"source": "src/index.ts",
 	"main": "dist/fwl.js",
 	"module": "dist/fwl.esm.js",
 	"scripts": {

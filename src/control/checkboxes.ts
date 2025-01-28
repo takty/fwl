@@ -1,14 +1,14 @@
-import { Control } from './control.js';
+import { Control } from './control';
 
 export class Checkboxes extends Control {
 
-	#items;
+	#items: string[];
 
-	constructor(owner, deg, items) {
+	constructor(owner: any, deg: number, items: string[]) {
 		super(owner, deg);
 		this.#items = [...items];
 
-		let maxLen = 0;
+		let maxLen: number = 0;
 		for (const it of items) {
 			maxLen = Math.max(maxLen, it.length);
 		}
@@ -18,7 +18,7 @@ export class Checkboxes extends Control {
 		this.setMaximumSize(s);
 	}
 
-	name() {
+	name(): string {
 		return 'checkboxes';
 	}
 

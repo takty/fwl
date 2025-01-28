@@ -1,51 +1,53 @@
 import * as stlics from 'stlics/stlics';
-import { FLayout } from './f-layout.js';
+import { FLayout } from './f-layout';
+
+type Size = { width: number, height: number };
 
 export class FlexibleLayout {
 
-	static DEBUG = true;
+	static DEBUG: boolean = true;
 
-	static SORT_BY_DESCENDANT  = true;
-	static SORT_BY_PATH_LENGTH = true;
+	static SORT_BY_DESCENDANT: boolean  = true;
+	static SORT_BY_PATH_LENGTH: boolean = true;
 
-	#root;
-	#size = { width: 0, height: 0 };
-	#lastDegree;
+	#root: FLayout;
+	#size: Size = { width: 0, height: 0 };
+	#lastDegree: number;
 
-	setRootContainer(cw) {
+	setRootContainer(cw: FLayout): void {
 		this.#root = cw;
 		const that = this;
 		this.#root.setParent(new class {
-			checkGivenMaximumSize(fe, size) {
-				const h = that.#size.height;
-				const w = that.#size.width;
+			checkGivenMaximumSize(fe, size: Size): boolean {
+				const h: number = that.#size.height;
+				const w: number = that.#size.width;
 				return (size.height <= h && size.width <= w);
 			}
-		}());
+		}() as FLayout);
 	}
 
-	getRootContainer() {
+	getRootContainer(): FLayout {
 		return this.#root;
 	}
 
-	getLastSatisfactionDegree() {
+	getLastSatisfactionDegree(): number {
 		return this.#lastDegree;
 	}
 
-	layoutContainer(ts) {
+	layoutContainer(ts: Size): boolean {
 		if (this.#performLayout(ts)) {
 			return true;
 		}
 		return false;
 	}
 
-	#performLayout(targetSize) {
+	#performLayout(targetSize: Size): boolean {
 		this.#size = { ...targetSize };
 		const p = new stlics.Problem();
 		this.#root.initializeProblem(p);
 		this.#sortVariablesInBreadthFirstOrder(p);
 
-		const pd = new Set();
+		const pd = new Set<number>();
 		this.#root.addPossibleDegreesTo(pd);
 		if (!this.#solveProblem(p, pd)) return false;
 
@@ -55,7 +57,7 @@ export class FlexibleLayout {
 		return true;
 	}
 
-	#solveProblem(p, possibleDegrees) {
+	#solveProblem(p: stlics.Problem, possibleDegrees: Set<number>): boolean {
 		let time = 0;
 		if (FlexibleLayout.DEBUG) {
 			console.log('\nsolveProblem - started');
@@ -88,7 +90,7 @@ export class FlexibleLayout {
 		return success;
 	}
 
-	#setWorstDegree(p, worstDesirability) {
+	#setWorstDegree(p: stlics.Problem, worstDesirability: number): boolean {
 		const res = this.#root.setWorstDegree(worstDesirability);
 		if (!res) {
 			console.log('Failure: initializeDomain');
@@ -104,13 +106,13 @@ export class FlexibleLayout {
 		return true;
 	}
 
-	#sortVariablesInBreadthFirstOrder(p) {
+	#sortVariablesInBreadthFirstOrder(p: stlics.Problem): void {
 		const lens = stlics.averagePathLengths(p);
 		const vs   = [this.#root.getVariable()];
 		let ls = [this.#root];
 
 		while (ls.length > 0) {
-			const nls = [];
+			const nls: FLayout[] = [];
 
 			for (const l of ls) {
 				for (const c of l.children()) {
@@ -125,12 +127,12 @@ export class FlexibleLayout {
 			}
 			ls = nls;
 		}
-		p.sortVariables((o1, o2) => {
+		p.sortVariables((o1: stlics.Variable, o2: stlics.Variable): number => {
 			return vs.indexOf(o1) - vs.indexOf(o2);
 		});
 	}
 
-	#sortVariablesInCertainOrder(ls, lens) {
+	#sortVariablesInCertainOrder(ls: FLayout[], lens: number[]): void {
 		ls.sort((l1, l2) => {
 			if (FlexibleLayout.SORT_BY_DESCENDANT) {
 				const ds1 = l1.getDescendantSize();

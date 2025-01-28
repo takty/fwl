@@ -1,19 +1,22 @@
-import { FLayout } from '../f-layout.js';
-import { Layout } from './layout.js';
+import { FElement } from '../f-element';
+import { FLayout } from '../f-layout';
+import { Layout } from './layout';
+
+type Size = { width: number, height: number };
 
 export class HorizontalArray extends Layout {
 
-	constructor(owner, deg) {
+	constructor(owner: any, deg: number) {
 		super(owner, deg, Layout.HORIZONTAL);
 	}
 
-	name() {
+	name(): string {
 		return 'horizontal array';
 	}
 
-	_calcSize(ss) {
-		let width  = 0;
-		let height = 0;
+	_calcSize(ss: Size[]): Size {
+		let width: number  = 0;
+		let height: number = 0;
 
 		for (const s of ss) {
 			width += s.width;
@@ -26,12 +29,12 @@ export class HorizontalArray extends Layout {
 		return { width, height };
 	}
 
-	doLayout(children, size) {
-		let x = 1;
+	doLayout(children: FElement[], size: Size): void {
+		let x: number = 1;
 
 		for (const fe of children) {
-			const min = fe.getMinimumSize();
-			const max = fe.getMaximumSize();
+			const min: Size = fe.getMinimumSize();
+			const max: Size = fe.getMaximumSize();
 			fe.setSize(min.width, Math.min(size.height - 2, max.height));
 			fe.setLocation(x, 1);
 

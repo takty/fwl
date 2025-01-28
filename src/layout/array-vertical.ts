@@ -1,19 +1,22 @@
-import { FLayout } from '../f-layout.js';
-import { Layout } from './layout.js';
+import { FElement } from '../f-element';
+import { FLayout } from '../f-layout';
+import { Layout } from './layout';
+
+type Size = { width: number, height: number };
 
 export class VerticalArray extends Layout {
 
-	constructor(owner, deg) {
+	constructor(owner: any, deg: number) {
 		super(owner, deg, Layout.VERTICAL);
 	}
 
-	name() {
+	name(): string {
 		return 'vertical array';
 	}
 
-	_calcSize(ss) {
-		let width  = 0;
-		let height = 0;
+	_calcSize(ss: Size[]): Size {
+		let width: number  = 0;
+		let height: number = 0;
 
 		for (const s of ss) {
 			if (width < s.width) {
@@ -26,12 +29,12 @@ export class VerticalArray extends Layout {
 		return { width, height };
 	}
 
-	doLayout(children, size) {
-		let y = 1;
+	doLayout(children: FElement[], size: Size): void {
+		let y: number = 1;
 
 		for (const fe of children) {
-			const min = fe.getMinimumSize();
-			const max = fe.getMaximumSize();
+			const min: Size = fe.getMinimumSize();
+			const max: Size = fe.getMaximumSize();
 			fe.setSize(Math.min(size.width - 2, max.width), min.height);
 			fe.setLocation(1, y);
 

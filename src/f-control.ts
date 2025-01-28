@@ -1,29 +1,33 @@
-import { FElement } from './f-element.js';
+import * as stlics from 'stlics/stlics';
+import { FElement } from './f-element';
+import { Control } from './control/control';
+
+type Size = { width: number, height: number };
 
 export class FControl extends FElement {
 
-	name() {
+	name(): string {
 		const can = this._typeToCandidate();
 		return can?.name() ?? 'control';
 	}
 
-	initializeEstimatedMinimumSize() {
-		let width  = Number.MAX_SAFE_INTEGER;
-		let height = Number.MAX_SAFE_INTEGER;
+	initializeEstimatedMinimumSize(): void {
+		let width: number  = Number.MAX_SAFE_INTEGER;
+		let height: number = Number.MAX_SAFE_INTEGER;
 
 		for (const can of this._cans) {
-			const d = can.getMinimumSize();
+			const d: Size = (can as Control).getMinimumSize();
 			width  = Math.min(width, d.width);
 			height = Math.min(height, d.height);
 		}
 		this._estMinSize = { width, height };
 	}
 
-	initializeDomain(p) {
+	initializeDomain(p: stlics.Problem): boolean {
 		this._states.length = 0;
 
-		for (let i = 0; i < this._cans.length; i += 1) {
-			const size = this._cans[i].getMinimumSize();
+		for (let i: number = 0; i < this._cans.length; i += 1) {
+			const size = (this._cans[i] as Control).getMinimumSize();
 
 			if (this.getParent().checkGivenMaximumSize(this, size)) {
 				this._states.push({ comb: [i], size });
@@ -36,7 +40,7 @@ export class FControl extends FElement {
 		return true;
 	}
 
-	setWorstDegree(deg) {
+	setWorstDegree(deg: number): boolean {
 		this._assignCandidates(deg, this._cans);
 		if (this._cans.length === 0) {
 			return false;
@@ -44,9 +48,9 @@ export class FControl extends FElement {
 		return true;
 	}
 
-	addPossibleDegreesTo(dest) {
+	addPossibleDegreesTo(dest: Set<number>): void {
 		for (const can of this._baseCans) {
-			can.addPossibleDegreesTo(dest);
+			(can as Control).addPossibleDegreesTo(dest);
 		}
 	}
 

@@ -1,29 +1,31 @@
 import * as stlics from 'stlics/stlics';
-import { FElement } from './f-element.js';
-import { Layout } from './layout/layout.js';
+import { FElement } from './f-element';
+import { Layout } from './layout/layout';
+
+type Size = { width: number, height: number };
 
 export class FLayout extends FElement {
 
-	static SAME_DIRECTION = 0.50;
+	static SAME_DIRECTION: number = 0.50;
 
-	#children = [];
+	#children: FElement[] = [];
 
-	name() {
+	name(): string {
 		const can = this._typeToCandidate();
 		return can?.name() ?? 'layout';
 	}
 
-	add(child) {
+	add(child: FElement): void {
 		child.setParent(this);
 		this.#children.push(child);
 	}
 
-	children() {
+	children(): FElement[] {
 		return this.#children;
 	}
 
-	getDescendantSize() {
-		let size = this.#children.length;
+	getDescendantSize(): number {
+		let size: number = this.#children.length;
 
 		for (const c of this.#children) {
 			if (c instanceof FLayout) {
@@ -37,21 +39,21 @@ export class FLayout extends FElement {
 	// -------------------------------------------------------------------------
 
 
-	initializeProblem(p) {
+	initializeProblem(p: stlics.Problem): void {
 		super.initializeProblem(p);
 
-		for (let i = 0; i < this.#children.length; ++i) {
-			const c = this.#children[i];
+		for (let i: number = 0; i < this.#children.length; ++i) {
+			const c: FElement = this.#children[i];
 			c.initializeProblem(p);
 
 			p.createConstraint(
-				(v0, v1) => this.#correspondingRelation(i, v0, v1),
+				(v0: number, v1: number): number => this.#correspondingRelation(i, v0, v1),
 				[this.getVariable(), c.getVariable()],
 				this.name() + ': toChild',
 			);
 			if (c instanceof FLayout) {
 				p.createConstraint(
-					(v0, v1) => this.#differentDirectionRelation(c, v0, v1),
+					(v0: number, v1: number): number => this.#differentDirectionRelation(c, v0, v1),
 					[this.getVariable(), c.getVariable()],
 					this.name() + ': toChild',
 				);
@@ -59,7 +61,7 @@ export class FLayout extends FElement {
 		}
 	}
 
-	#correspondingRelation(childIndex, val1, val2) {
+	#correspondingRelation(childIndex: number, val1: number, val2: number): number {
 		const s = this._states[val1];
 		if (s.comb[childIndex + 1] === val2) {
 			return 1;
@@ -67,9 +69,9 @@ export class FLayout extends FElement {
 		return 0;
 	}
 
-	#differentDirectionRelation(childLayout, val1, val2) {
-		const pd = this._typeToCandidate(val1).getDirection();
-		const cd = childLayout._typeToCandidate(val2).getDirection();
+	#differentDirectionRelation(childLayout: FLayout, val1: number, val2: number): number {
+		const pd: number = (this._typeToCandidate(val1) as Layout).getDirection();
+		const cd: number = (childLayout._typeToCandidate(val2) as Layout).getDirection();
 		if (pd !== Layout.NO_DIR && cd !== Layout.NO_DIR && pd === cd) {
 			return FLayout.SAME_DIRECTION;
 		}
@@ -80,43 +82,43 @@ export class FLayout extends FElement {
 	// -------------------------------------------------------------------------
 
 
-	initializeEstimatedMinimumSize() {
+	initializeEstimatedMinimumSize(): void {
 		for (const c of this.#children) {
 			c.initializeEstimatedMinimumSize();
 		}
-		let width  = Number.MAX_SAFE_INTEGER;
-		let height = Number.MAX_SAFE_INTEGER;
+		let width: number  = Number.MAX_SAFE_INTEGER;
+		let height: number = Number.MAX_SAFE_INTEGER;
 
 		for (const can of this._cans) {
-			const d = can.getEstimatedMinimumSize(this.#children);
+			const d: Size = (can as Layout).getEstimatedMinimumSize(this.#children);
 			width  = Math.min(width, d.width);
 			height = Math.min(height, d.height);
 		}
 		this._estMinSize = { width, height };
 	}
 
-	initializeDomain(p) {
+	initializeDomain(p: stlics.Problem): boolean {
 		for (const c of this.#children) {
 			if (!c.initializeDomain(p)) {
 				return false;
 			}
 		}
-		const comb = new Array(this.#children.length + 1).fill(0);
-		const lens = new Array(this.#children.length + 1).fill(0);
+		const comb: number[] = new Array(this.#children.length + 1).fill(0);
+		const lens: number[] = new Array(this.#children.length + 1).fill(0);
 
 		lens[0] = this._cans.length;
-		for (let i = 0; i < this.#children.length; ++i) {
+		for (let i: number = 0; i < this.#children.length; ++i) {
 			lens[i + 1] = this.#children[i]._states.length;
 		}
 
-		let width  = Number.MAX_SAFE_INTEGER;
-		let height = Number.MAX_SAFE_INTEGER;
+		let width: number  = Number.MAX_SAFE_INTEGER;
+		let height: number = Number.MAX_SAFE_INTEGER;
 
 		this._states.length = 0;
 
 		do {  // Try assigning a value and check the size.
-			for (let i = 0; i < this.#children.length; ++i) {
-				const c = this.#children[i];
+			for (let i: number = 0; i < this.#children.length; ++i) {
+				const c: FElement = this.#children[i];
 				c.getVariable().assign(comb[i + 1]);
 			}
 			const size = this._cans[comb[0]].getMinimumSize(this.#children);
@@ -140,8 +142,8 @@ export class FLayout extends FElement {
 		return true;
 	}
 
-	#increment(comb, lens) {
-		for (let i = 0; i < comb.length; ++i) {
+	#increment(comb: number[], lens: number[]): boolean {
+		for (let i: number = 0; i < comb.length; ++i) {
 			comb[i]++;
 			if (comb[i] < lens[i]) break;
 			if (i === comb.length - 1) return false;
@@ -150,9 +152,9 @@ export class FLayout extends FElement {
 		return true;
 	}
 
-	checkGivenMaximumSize(child, childMinSize) {
+	checkGivenMaximumSize(child, childMinSize: Size): boolean {
 		for (const lt of this._cans) {
-			const min = lt.getEstimatedMinimumSizeIf(this.#children, child, childMinSize);
+			const min: Size = (lt as Layout).getEstimatedMinimumSizeIf(this.#children, child, childMinSize);
 			if (this.getParent().checkGivenMaximumSize(this, min)) {
 				return true;
 			}
@@ -160,7 +162,7 @@ export class FLayout extends FElement {
 		return false;
 	}
 
-	setWorstDegree(deg) {
+	setWorstDegree(deg: number): boolean {
 		this._assignCandidates(deg, this._cans);
 		if (this._cans.length === 0) {
 			return false;
@@ -173,7 +175,7 @@ export class FLayout extends FElement {
 		return true;
 	}
 
-	addPossibleDegreesTo(dest) {
+	addPossibleDegreesTo(dest: Set<number>): void {
 		for (const can of this._baseCans) {
 			dest.add(can.getDegree());
 		}
@@ -187,8 +189,8 @@ export class FLayout extends FElement {
 	// -------------------------------------------------------------------------
 
 
-	doLayout() {
-		const can = this._typeToCandidate();
+	doLayout(): void {
+		const can = this._typeToCandidate() as Layout;
 		can.doLayout(this.#children, this.getSize());
 	}
 

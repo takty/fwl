@@ -1,10 +1,10 @@
-import { Control } from './control.js';
+import { Control } from './control';
 
 export class Checkbox extends Control {
 
-	#text;
+	#text: string;
 
-	constructor(owner, deg, text) {
+	constructor(owner: any, deg: number, text: string) {
 		super(owner, deg);
 		this.#text = text;
 
@@ -13,7 +13,7 @@ export class Checkbox extends Control {
 		this.setMaximumSize(s);
 	}
 
-	name() {
+	name(): string {
 		return 'checkbox';
 	}
 
