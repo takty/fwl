@@ -73,7 +73,7 @@
         localRequire,
         module,
         module.exports,
-        this
+        globalObject
       );
     }
 
@@ -142,15 +142,16 @@
       this[globalName] = mainExports;
     }
   }
-})({"e64mY":[function(require,module,exports) {
+})({"7FgAn":[function(require,module,exports,__globalThis) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
+var HMR_USE_SSE = false;
 module.bundle.HMR_BUNDLE_ID = "ebf397d94fba9c0b";
 "use strict";
-/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, globalThis, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
+/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, HMR_USE_SSE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
   HMRAsset,
   HMRMessage,
@@ -189,13 +190,14 @@ declare var HMR_HOST: string;
 declare var HMR_PORT: string;
 declare var HMR_ENV_HASH: string;
 declare var HMR_SECURE: boolean;
+declare var HMR_USE_SSE: boolean;
 declare var chrome: ExtensionContext;
 declare var browser: ExtensionContext;
 declare var __parcel__import__: (string) => Promise<void>;
 declare var __parcel__importScripts__: (string) => Promise<void>;
 declare var globalThis: typeof self;
 declare var ServiceWorkerGlobalScope: Object;
-*/ var OVERLAY_ID = "__parcel__error__overlay__";
+*/ var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
 function Module(moduleName) {
     OldModule.call(this, moduleName);
@@ -214,52 +216,65 @@ function Module(moduleName) {
 }
 module.bundle.Module = Module;
 module.bundle.hotData = {};
-var checkedAssets, assetsToDispose, assetsToAccept /*: Array<[ParcelRequire, string]> */ ;
+var checkedAssets /*: {|[string]: boolean|} */ , disposedAssets /*: {|[string]: boolean|} */ , assetsToDispose /*: Array<[ParcelRequire, string]> */ , assetsToAccept /*: Array<[ParcelRequire, string]> */ ;
 function getHostname() {
-    return HMR_HOST || (location.protocol.indexOf("http") === 0 ? location.hostname : "localhost");
+    return HMR_HOST || (location.protocol.indexOf('http') === 0 ? location.hostname : 'localhost');
 }
 function getPort() {
     return HMR_PORT || location.port;
-} // eslint-disable-next-line no-redeclare
+}
+// eslint-disable-next-line no-redeclare
 var parent = module.bundle.parent;
-if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
+if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
     var hostname = getHostname();
     var port = getPort();
-    var protocol = HMR_SECURE || location.protocol == "https:" && !/localhost|127.0.0.1|0.0.0.0/.test(hostname) ? "wss" : "ws";
-    var ws = new WebSocket(protocol + "://" + hostname + (port ? ":" + port : "") + "/"); // Web extension context
-    var extCtx = typeof chrome === "undefined" ? typeof browser === "undefined" ? null : browser : chrome; // Safari doesn't support sourceURL in error stacks.
+    var protocol = HMR_SECURE || location.protocol == 'https:' && ![
+        'localhost',
+        '127.0.0.1',
+        '0.0.0.0'
+    ].includes(hostname) ? 'wss' : 'ws';
+    var ws;
+    if (HMR_USE_SSE) ws = new EventSource('/__parcel_hmr');
+    else try {
+        ws = new WebSocket(protocol + '://' + hostname + (port ? ':' + port : '') + '/');
+    } catch (err) {
+        if (err.message) console.error(err.message);
+        ws = {};
+    }
+    // Web extension context
+    var extCtx = typeof browser === 'undefined' ? typeof chrome === 'undefined' ? null : chrome : browser;
+    // Safari doesn't support sourceURL in error stacks.
     // eval may also be disabled via CSP, so do a quick check.
     var supportsSourceURL = false;
     try {
         (0, eval)('throw new Error("test"); //# sourceURL=test.js');
     } catch (err) {
-        supportsSourceURL = err.stack.includes("test.js");
-    } // $FlowFixMe
-    ws.onmessage = async function(event) {
+        supportsSourceURL = err.stack.includes('test.js');
+    }
+    // $FlowFixMe
+    ws.onmessage = async function(event /*: {data: string, ...} */ ) {
         checkedAssets = {} /*: {|[string]: boolean|} */ ;
+        disposedAssets = {} /*: {|[string]: boolean|} */ ;
         assetsToAccept = [];
         assetsToDispose = [];
-        var data = JSON.parse(event.data);
-        if (data.type === "update") {
+        var data /*: HMRMessage */  = JSON.parse(event.data);
+        if (data.type === 'reload') fullReload();
+        else if (data.type === 'update') {
             // Remove error overlay if there is one
-            if (typeof document !== "undefined") removeErrorOverlay();
-            let assets = data.assets.filter((asset)=>asset.envHash === HMR_ENV_HASH); // Handle HMR Update
+            if (typeof document !== 'undefined') removeErrorOverlay();
+            let assets = data.assets.filter((asset)=>asset.envHash === HMR_ENV_HASH);
+            // Handle HMR Update
             let handled = assets.every((asset)=>{
-                return asset.type === "css" || asset.type === "js" && hmrAcceptCheck(module.bundle.root, asset.id, asset.depsByBundle);
+                return asset.type === 'css' || asset.type === 'js' && hmrAcceptCheck(module.bundle.root, asset.id, asset.depsByBundle);
             });
             if (handled) {
-                console.clear(); // Dispatch custom event so other runtimes (e.g React Refresh) are aware.
-                if (typeof window !== "undefined" && typeof CustomEvent !== "undefined") window.dispatchEvent(new CustomEvent("parcelhmraccept"));
-                await hmrApplyUpdates(assets); // Dispose all old assets.
-                let processedAssets = {} /*: {|[string]: boolean|} */ ;
-                for(let i = 0; i < assetsToDispose.length; i++){
-                    let id = assetsToDispose[i][1];
-                    if (!processedAssets[id]) {
-                        hmrDispose(assetsToDispose[i][0], id);
-                        processedAssets[id] = true;
-                    }
-                } // Run accept callbacks. This will also re-execute other disposed assets in topological order.
-                processedAssets = {};
+                console.clear();
+                // Dispatch custom event so other runtimes (e.g React Refresh) are aware.
+                if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') window.dispatchEvent(new CustomEvent('parcelhmraccept'));
+                await hmrApplyUpdates(assets);
+                hmrDisposeQueue();
+                // Run accept callbacks. This will also re-execute other disposed assets in topological order.
+                let processedAssets = {};
                 for(let i = 0; i < assetsToAccept.length; i++){
                     let id = assetsToAccept[i][1];
                     if (!processedAssets[id]) {
@@ -269,36 +284,39 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
                 }
             } else fullReload();
         }
-        if (data.type === "error") {
+        if (data.type === 'error') {
             // Log parcel errors to console
             for (let ansiDiagnostic of data.diagnostics.ansi){
                 let stack = ansiDiagnostic.codeframe ? ansiDiagnostic.codeframe : ansiDiagnostic.stack;
-                console.error("\uD83D\uDEA8 [parcel]: " + ansiDiagnostic.message + "\n" + stack + "\n\n" + ansiDiagnostic.hints.join("\n"));
+                console.error("\uD83D\uDEA8 [parcel]: " + ansiDiagnostic.message + '\n' + stack + '\n\n' + ansiDiagnostic.hints.join('\n'));
             }
-            if (typeof document !== "undefined") {
+            if (typeof document !== 'undefined') {
                 // Render the fancy html overlay
                 removeErrorOverlay();
-                var overlay = createErrorOverlay(data.diagnostics.html); // $FlowFixMe
+                var overlay = createErrorOverlay(data.diagnostics.html);
+                // $FlowFixMe
                 document.body.appendChild(overlay);
             }
         }
     };
-    ws.onerror = function(e) {
-        console.error(e.message);
-    };
-    ws.onclose = function() {
-        console.warn("[parcel] \uD83D\uDEA8 Connection to the HMR server was lost");
-    };
+    if (ws instanceof WebSocket) {
+        ws.onerror = function(e) {
+            if (e.message) console.error(e.message);
+        };
+        ws.onclose = function() {
+            console.warn("[parcel] \uD83D\uDEA8 Connection to the HMR server was lost");
+        };
+    }
 }
 function removeErrorOverlay() {
     var overlay = document.getElementById(OVERLAY_ID);
     if (overlay) {
         overlay.remove();
-        console.log("[parcel] ✨ Error resolved");
+        console.log("[parcel] \u2728 Error resolved");
     }
 }
 function createErrorOverlay(diagnostics) {
-    var overlay = document.createElement("div");
+    var overlay = document.createElement('div');
     overlay.id = OVERLAY_ID;
     let errorHTML = '<div style="background: black; opacity: 0.85; font-size: 16px; color: white; position: fixed; height: 100%; width: 100%; top: 0px; left: 0px; padding: 30px; font-family: Menlo, Consolas, monospace; z-index: 9999;">';
     for (let diagnostic of diagnostics){
@@ -306,26 +324,26 @@ function createErrorOverlay(diagnostics) {
             return `${p}
 <a href="/__parcel_launch_editor?file=${encodeURIComponent(frame.location)}" style="text-decoration: underline; color: #888" onclick="fetch(this.href); return false">${frame.location}</a>
 ${frame.code}`;
-        }, "") : diagnostic.stack;
+        }, '') : diagnostic.stack;
         errorHTML += `
       <div>
         <div style="font-size: 18px; font-weight: bold; margin-top: 20px;">
-          🚨 ${diagnostic.message}
+          \u{1F6A8} ${diagnostic.message}
         </div>
         <pre>${stack}</pre>
         <div>
-          ${diagnostic.hints.map((hint)=>"<div>\uD83D\uDCA1 " + hint + "</div>").join("")}
+          ${diagnostic.hints.map((hint)=>"<div>\uD83D\uDCA1 " + hint + '</div>').join('')}
         </div>
-        ${diagnostic.documentation ? `<div>📝 <a style="color: violet" href="${diagnostic.documentation}" target="_blank">Learn more</a></div>` : ""}
+        ${diagnostic.documentation ? `<div>\u{1F4DD} <a style="color: violet" href="${diagnostic.documentation}" target="_blank">Learn more</a></div>` : ''}
       </div>
     `;
     }
-    errorHTML += "</div>";
+    errorHTML += '</div>';
     overlay.innerHTML = errorHTML;
     return overlay;
 }
 function fullReload() {
-    if ("reload" in location) location.reload();
+    if ('reload' in location) location.reload();
     else if (extCtx && extCtx.runtime && extCtx.runtime.reload) extCtx.runtime.reload();
 }
 function getParents(bundle, id) /*: Array<[ParcelRequire, string]> */ {
@@ -344,12 +362,16 @@ function getParents(bundle, id) /*: Array<[ParcelRequire, string]> */ {
     return parents;
 }
 function updateLink(link) {
+    var href = link.getAttribute('href');
+    if (!href) return;
     var newLink = link.cloneNode();
     newLink.onload = function() {
         if (link.parentNode !== null) // $FlowFixMe
         link.parentNode.removeChild(link);
     };
-    newLink.setAttribute("href", link.getAttribute("href").split("?")[0] + "?" + Date.now()); // $FlowFixMe
+    newLink.setAttribute('href', // $FlowFixMe
+    href.split('?')[0] + '?' + Date.now());
+    // $FlowFixMe
     link.parentNode.insertBefore(newLink, link.nextSibling);
 }
 var cssTimeout = null;
@@ -359,9 +381,9 @@ function reloadCSS() {
         var links = document.querySelectorAll('link[rel="stylesheet"]');
         for(var i = 0; i < links.length; i++){
             // $FlowFixMe[incompatible-type]
-            var href = links[i].getAttribute("href");
+            var href /*: string */  = links[i].getAttribute('href');
             var hostname = getHostname();
-            var servedFromHMRServer = hostname === "localhost" ? new RegExp("^(https?:\\/\\/(0.0.0.0|127.0.0.1)|localhost):" + getPort()).test(href) : href.indexOf(hostname + ":" + getPort());
+            var servedFromHMRServer = hostname === 'localhost' ? new RegExp('^(https?:\\/\\/(0.0.0.0|127.0.0.1)|localhost):' + getPort()).test(href) : href.indexOf(hostname + ':' + getPort());
             var absolute = /^https?:\/\//i.test(href) && href.indexOf(location.origin) !== 0 && !servedFromHMRServer;
             if (!absolute) updateLink(links[i]);
         }
@@ -369,23 +391,23 @@ function reloadCSS() {
     }, 50);
 }
 function hmrDownload(asset) {
-    if (asset.type === "js") {
-        if (typeof document !== "undefined") {
-            let script = document.createElement("script");
-            script.src = asset.url + "?t=" + Date.now();
-            if (asset.outputFormat === "esmodule") script.type = "module";
+    if (asset.type === 'js') {
+        if (typeof document !== 'undefined') {
+            let script = document.createElement('script');
+            script.src = asset.url + '?t=' + Date.now();
+            if (asset.outputFormat === 'esmodule') script.type = 'module';
             return new Promise((resolve, reject)=>{
                 var _document$head;
                 script.onload = ()=>resolve(script);
                 script.onerror = reject;
                 (_document$head = document.head) === null || _document$head === void 0 || _document$head.appendChild(script);
             });
-        } else if (typeof importScripts === "function") {
+        } else if (typeof importScripts === 'function') {
             // Worker scripts
-            if (asset.outputFormat === "esmodule") return import(asset.url + "?t=" + Date.now());
+            if (asset.outputFormat === 'esmodule') return import(asset.url + '?t=' + Date.now());
             else return new Promise((resolve, reject)=>{
                 try {
-                    importScripts(asset.url + "?t=" + Date.now());
+                    importScripts(asset.url + '?t=' + Date.now());
                     resolve();
                 } catch (err) {
                     reject(err);
@@ -408,15 +430,10 @@ async function hmrApplyUpdates(assets) {
             let promises = assets.map((asset)=>{
                 var _hmrDownload;
                 return (_hmrDownload = hmrDownload(asset)) === null || _hmrDownload === void 0 ? void 0 : _hmrDownload.catch((err)=>{
-                    // Web extension bugfix for Chromium
-                    // https://bugs.chromium.org/p/chromium/issues/detail?id=1255412#c12
-                    if (extCtx && extCtx.runtime && extCtx.runtime.getManifest().manifest_version == 3) {
-                        if (typeof ServiceWorkerGlobalScope != "undefined" && global instanceof ServiceWorkerGlobalScope) {
-                            extCtx.runtime.reload();
-                            return;
-                        }
-                        asset.url = extCtx.runtime.getURL("/__parcel_hmr_proxy__?url=" + encodeURIComponent(asset.url + "?t=" + Date.now()));
-                        return hmrDownload(asset);
+                    // Web extension fix
+                    if (extCtx && extCtx.runtime && extCtx.runtime.getManifest().manifest_version == 3 && typeof ServiceWorkerGlobalScope != 'undefined' && global instanceof ServiceWorkerGlobalScope) {
+                        extCtx.runtime.reload();
+                        return;
                     }
                     throw err;
                 });
@@ -436,11 +453,11 @@ async function hmrApplyUpdates(assets) {
         });
     }
 }
-function hmrApply(bundle, asset) {
+function hmrApply(bundle /*: ParcelRequire */ , asset /*:  HMRAsset */ ) {
     var modules = bundle.modules;
     if (!modules) return;
-    if (asset.type === "css") reloadCSS();
-    else if (asset.type === "js") {
+    if (asset.type === 'css') reloadCSS();
+    else if (asset.type === 'js') {
         let deps = asset.depsByBundle[bundle.HMR_BUNDLE_ID];
         if (deps) {
             if (modules[asset.id]) {
@@ -456,13 +473,16 @@ function hmrApply(bundle, asset) {
             if (supportsSourceURL) // Global eval. We would use `new Function` here but browser
             // support for source maps is better with eval.
             (0, eval)(asset.output);
-             // $FlowFixMe
+            // $FlowFixMe
             let fn = global.parcelHotUpdate[asset.id];
             modules[asset.id] = [
                 fn,
                 deps
             ];
-        } else if (bundle.parent) hmrApply(bundle.parent, asset);
+        }
+        // Always traverse to the parent bundle, even if we already replaced the asset in this bundle.
+        // This is required in case modules are duplicated. We need to ensure all instances have the updated code.
+        if (bundle.parent) hmrApply(bundle.parent, asset);
     }
 }
 function hmrDelete(bundle, id) {
@@ -475,17 +495,19 @@ function hmrDelete(bundle, id) {
         for(let dep in deps){
             let parents = getParents(module.bundle.root, deps[dep]);
             if (parents.length === 1) orphans.push(deps[dep]);
-        } // Delete the module. This must be done before deleting dependencies in case of circular dependencies.
+        }
+        // Delete the module. This must be done before deleting dependencies in case of circular dependencies.
         delete modules[id];
-        delete bundle.cache[id]; // Now delete the orphans.
+        delete bundle.cache[id];
+        // Now delete the orphans.
         orphans.forEach((id)=>{
             hmrDelete(module.bundle.root, id);
         });
     } else if (bundle.parent) hmrDelete(bundle.parent, id);
 }
-function hmrAcceptCheck(bundle, id, depsByBundle) {
+function hmrAcceptCheck(bundle /*: ParcelRequire */ , id /*: string */ , depsByBundle /*: ?{ [string]: { [string]: string } }*/ ) {
     if (hmrAcceptCheckOne(bundle, id, depsByBundle)) return true;
-     // Traverse parents breadth first. All possible ancestries must accept the HMR update, or we'll reload.
+    // Traverse parents breadth first. All possible ancestries must accept the HMR update, or we'll reload.
     let parents = getParents(module.bundle.root, id);
     let accepted = false;
     while(parents.length > 0){
@@ -506,7 +528,7 @@ function hmrAcceptCheck(bundle, id, depsByBundle) {
     }
     return accepted;
 }
-function hmrAcceptCheckOne(bundle, id, depsByBundle) {
+function hmrAcceptCheckOne(bundle /*: ParcelRequire */ , id /*: string */ , depsByBundle /*: ?{ [string]: { [string]: string } }*/ ) {
     var modules = bundle.modules;
     if (!modules) return;
     if (depsByBundle && !depsByBundle[bundle.HMR_BUNDLE_ID]) {
@@ -530,7 +552,18 @@ function hmrAcceptCheckOne(bundle, id, depsByBundle) {
         return true;
     }
 }
-function hmrDispose(bundle, id) {
+function hmrDisposeQueue() {
+    // Dispose all old assets.
+    for(let i = 0; i < assetsToDispose.length; i++){
+        let id = assetsToDispose[i][1];
+        if (!disposedAssets[id]) {
+            hmrDispose(assetsToDispose[i][0], id);
+            disposedAssets[id] = true;
+        }
+    }
+    assetsToDispose = [];
+}
+function hmrDispose(bundle /*: ParcelRequire */ , id /*: string */ ) {
     var cached = bundle.cache[id];
     bundle.hotData[id] = {};
     if (cached && cached.hot) cached.hot.data = bundle.hotData[id];
@@ -539,50 +572,56 @@ function hmrDispose(bundle, id) {
     });
     delete bundle.cache[id];
 }
-function hmrAccept(bundle, id) {
+function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
     // Execute the module.
-    bundle(id); // Run the accept callbacks in the new version of the module.
+    bundle(id);
+    // Run the accept callbacks in the new version of the module.
     var cached = bundle.cache[id];
-    if (cached && cached.hot && cached.hot._acceptCallbacks.length) cached.hot._acceptCallbacks.forEach(function(cb) {
-        var assetsToAlsoAccept = cb(function() {
-            return getParents(module.bundle.root, id);
+    if (cached && cached.hot && cached.hot._acceptCallbacks.length) {
+        let assetsToAlsoAccept = [];
+        cached.hot._acceptCallbacks.forEach(function(cb) {
+            let additionalAssets = cb(function() {
+                return getParents(module.bundle.root, id);
+            });
+            if (Array.isArray(additionalAssets) && additionalAssets.length) assetsToAlsoAccept.push(...additionalAssets);
         });
-        if (assetsToAlsoAccept && assetsToAccept.length) {
-            assetsToAlsoAccept.forEach(function(a) {
-                hmrDispose(a[0], a[1]);
-            }); // $FlowFixMe[method-unbinding]
-            assetsToAccept.push.apply(assetsToAccept, assetsToAlsoAccept);
+        if (assetsToAlsoAccept.length) {
+            let handled = assetsToAlsoAccept.every(function(a) {
+                return hmrAcceptCheck(a[0], a[1]);
+            });
+            if (!handled) return fullReload();
+            hmrDisposeQueue();
         }
-    });
+    }
 }
 
-},{}],"cgMBW":[function(require,module,exports) {
+},{}],"cgMBW":[function(require,module,exports,__globalThis) {
 var _fwlEsmJs = require("../../dist/fwl.esm.js");
-document.addEventListener("DOMContentLoaded", ()=>{
+document.addEventListener('DOMContentLoaded', ()=>{
     LayoutSample.main();
 });
 class LayoutSample {
     static UNIT = 20;
     static main() {
-        const can = document.createElement("canvas");
+        const can = document.createElement('canvas');
         document.body.appendChild(can);
         const ls = new LayoutSample();
         ls.initialize();
         LayoutSample.#onResize(can, ls);
-        window.addEventListener("resize", ()=>LayoutSample.#onResize(can, ls));
+        window.addEventListener('resize', ()=>LayoutSample.#onResize(can, ls));
     }
     static #setCanvasSize(can) {
         can.width = Math.floor((document.documentElement.clientWidth - 16) / LayoutSample.UNIT) * LayoutSample.UNIT;
         can.height = Math.floor((document.documentElement.clientHeight - 16) / LayoutSample.UNIT) * LayoutSample.UNIT;
     }
-    static #onResize(can1, ls) {
-        LayoutSample.#setCanvasSize(can1);
-        const ctx = can1.getContext("2d");
-        ctx.clearRect(0, 0, can1.width, can1.height);
+    static #onResize(can, ls) {
+        LayoutSample.#setCanvasSize(can);
+        const ctx = can.getContext('2d');
+        ctx.clearRect(0, 0, can.width, can.height);
         ctx.scale(20, 20);
-        ctx.font = "0.6px san-serif";
+        ctx.font = '0.6px san-serif';
         ls.start();
-        ls.draw(can1);
+        ls.draw(can);
     }
     // -------------------------------------------------------------------------
     #fl;
@@ -591,11 +630,11 @@ class LayoutSample {
         // const cw1 = new Group({ children: [new Action("Button 1"), new Action("Button 2")] });
         const cw2 = new _fwlEsmJs.Group({
             children: [
-                new _fwlEsmJs.Caption("Long Caption1", "Caption1"),
-                new _fwlEsmJs.SingleBoolean("OK", "Cancel")
+                new _fwlEsmJs.Caption('Long Caption1', 'Caption1'),
+                new _fwlEsmJs.SingleBoolean('OK', 'Cancel')
             ]
         });
-        const c3 = new _fwlEsmJs.Single("Checkbox");
+        const c3 = new _fwlEsmJs.Single('Checkbox');
         const rbs = new _fwlEsmJs.Single("Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6", "Item 7", "Item 8");
         const cw3 = new _fwlEsmJs.Group({
             children: [
@@ -603,7 +642,7 @@ class LayoutSample {
                 rbs
             ]
         });
-        const l = new _fwlEsmJs.Labeling(new _fwlEsmJs.Caption("Long Label2", "Label2"), new _fwlEsmJs.Single("Checkbox2"));
+        const l = new _fwlEsmJs.Labeling(new _fwlEsmJs.Caption('Long Label2', 'Label2'), new _fwlEsmJs.Single('Checkbox2'));
         const cw = new _fwlEsmJs.Group({
             children: [
                 l,
@@ -623,25 +662,25 @@ class LayoutSample {
         });
     }
     draw(can) {
-        const ctx = can.getContext("2d");
+        const ctx = can.getContext('2d');
         dr(this.#fl.getRootContainer(), 0, 0);
         function dr(r, x, y) {
-            const { x: lx , y: ly  } = r.getLocation();
-            const { width , height  } = r.getSize();
-            ctx.strokeStyle = r.isValid() ? "rgba(0, 0, 0, 0.5)" : "rgba(255, 0, 0, 0.75)";
+            const { x: lx, y: ly } = r.getLocation();
+            const { width, height } = r.getSize();
+            ctx.strokeStyle = r.isValid() ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 0, 0, 0.75)';
             ctx.lineWidth = 0.1;
             ctx.strokeRect(x + lx, y + ly, width, height);
-            ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.fillRect(x + lx, y + ly, width, height);
             ctx.strokeStyle = null;
-            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillText(`${r.name()} ${width}, ${height}`, x + lx + 0.1, y + ly + 0.7);
             if (r instanceof _fwlEsmJs.FLayout) for (const c of r.children())dr(c, lx, ly);
         }
     }
 }
 
-},{"../../dist/fwl.esm.js":"gYaZE"}],"gYaZE":[function(require,module,exports) {
+},{"../../dist/fwl.esm.js":"gYaZE"}],"gYaZE":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Control", ()=>$7f32230d3b1cddf5$export$7a7fa4424cb20976);
@@ -666,7 +705,7 @@ parcelHelpers.export(exports, "FLayout", ()=>$56599b1fb7a9d24d$export$a32a3c53df
 parcelHelpers.export(exports, "Group", ()=>$97bc4c7e48814405$export$eb2fcfdbd7ba97d4);
 parcelHelpers.export(exports, "Labeling", ()=>$01b7303749d42b99$export$7f9751bb9f40e790);
 parcelHelpers.export(exports, "FlexibleLayout", ()=>$3daa3e638ff94731$export$bfecdd4c292f614d);
-var _stlics = require("stlics");
+var _stlics = require("stlics/stlics");
 function $parcel$export(e, n, v, s) {
     Object.defineProperty(e, n, {
         get: v,
@@ -734,7 +773,7 @@ class $67bc1645818d9dfb$export$353f5b6fc5456de1 extends $7f32230d3b1cddf5$export
         this.setMaximumSize(s);
     }
     name() {
-        return "button";
+        return 'button';
     }
 }
 var $69a47cf6b0d23842$exports = {};
@@ -752,7 +791,7 @@ class $69a47cf6b0d23842$export$48513f6b9f8ce62d extends $7f32230d3b1cddf5$export
         this.setMaximumSize(s);
     }
     name() {
-        return "checkbox";
+        return 'checkbox';
     }
 }
 var $a9c8def4b94681c3$exports = {};
@@ -774,7 +813,7 @@ class $a9c8def4b94681c3$export$2bc6b1ab4f9a3f extends $7f32230d3b1cddf5$export$7
         this.setMaximumSize(s);
     }
     name() {
-        return "checkboxes";
+        return 'checkboxes';
     }
 }
 var $6c669da18eb1d4af$exports = {};
@@ -792,7 +831,7 @@ class $6c669da18eb1d4af$export$b04be29aa201d4f5 extends $7f32230d3b1cddf5$export
         this.setMaximumSize(s);
     }
     name() {
-        return "label";
+        return 'label';
     }
 }
 var $0313106492189ea8$exports = {};
@@ -837,7 +876,7 @@ class $0313106492189ea8$export$41f133550aa26f48 extends $7f32230d3b1cddf5$export
         });
     }
     name() {
-        return "list box";
+        return 'list box';
     }
 }
 var $1bf1cd471ae02e23$exports = {};
@@ -859,7 +898,7 @@ class $1bf1cd471ae02e23$export$3f5c08aebfbff744 extends $7f32230d3b1cddf5$export
         this.setMaximumSize(s);
     }
     name() {
-        return "radio buttons";
+        return 'radio buttons';
     }
 }
 var $02bdab161dfe53b8$exports = {};
@@ -929,7 +968,7 @@ class $b4524a03ecc9c659$export$d00c746f5a6c6b {
     _cans = [];
     _baseCans = [];
     name() {
-        return "";
+        return '';
     }
     setParent(parent) {
         this.#parent = parent;
@@ -958,19 +997,15 @@ class $b4524a03ecc9c659$export$d00c746f5a6c6b {
         this._baseCans = [
             ...this._cans
         ];
-        this.#type = p.createVariable({
-            name: this.name() + ": type"
-        });
-        p.createConstraint({
-            name: this.name() + ": type",
-            relation: new (0, _stlics.FuzzyRelationFunction)((...vals)=>this.#typeRelation(...vals)),
-            variables: [
-                this.#type
-            ]
-        });
+        this.#type = p.createVariable((0, _stlics.Domain).create([
+            0
+        ]), 0, this.name() + ': type');
+        p.createConstraint((v0)=>this.#typeRelation(v0), [
+            this.#type
+        ], this.name() + ': type');
     }
     #typeRelation(val) {
-        if (this._states.length === 0) return (0, _stlics.FuzzyRelation).MIN_SATISFACTION_DEGREE;
+        if (this._states.length === 0) return 0;
         const pc = this._typeToCandidate(val);
         return pc.getDegree();
     }
@@ -1035,7 +1070,7 @@ class $56599b1fb7a9d24d$export$a32a3c53df62fb64 extends $b4524a03ecc9c659$export
     #children = [];
     name() {
         const can = this._typeToCandidate();
-        return can?.name() ?? "layout";
+        return can?.name() ?? 'layout';
     }
     add(child) {
         child.setParent(this);
@@ -1055,34 +1090,26 @@ class $56599b1fb7a9d24d$export$a32a3c53df62fb64 extends $b4524a03ecc9c659$export
         for(let i = 0; i < this.#children.length; ++i){
             const c = this.#children[i];
             c.initializeProblem(p);
-            p.createConstraint({
-                name: this.name() + ": toChild",
-                relation: new (0, _stlics.FuzzyRelationFunction)((...vals)=>this.#correspondingRelation(i, ...vals)),
-                variables: [
-                    this.getVariable(),
-                    c.getVariable()
-                ]
-            });
-            if (c instanceof $56599b1fb7a9d24d$export$a32a3c53df62fb64) p.createConstraint({
-                name: this.name() + ": toChild",
-                relation: new (0, _stlics.FuzzyRelationFunction)((...vals)=>this.#differentDirectionRelation(c, ...vals)),
-                variables: [
-                    this.getVariable(),
-                    c.getVariable()
-                ]
-            });
+            p.createConstraint((v0, v1)=>this.#correspondingRelation(i, v0, v1), [
+                this.getVariable(),
+                c.getVariable()
+            ], this.name() + ': toChild');
+            if (c instanceof $56599b1fb7a9d24d$export$a32a3c53df62fb64) p.createConstraint((v0, v1)=>this.#differentDirectionRelation(c, v0, v1), [
+                this.getVariable(),
+                c.getVariable()
+            ], this.name() + ': toChild');
         }
     }
     #correspondingRelation(childIndex, val1, val2) {
         const s = this._states[val1];
-        if (s.comb[childIndex + 1] === val2) return (0, _stlics.FuzzyRelation).MAX_SATISFACTION_DEGREE;
-        return (0, _stlics.FuzzyRelation).MIN_SATISFACTION_DEGREE;
+        if (s.comb[childIndex + 1] === val2) return 1;
+        return 0;
     }
-    #differentDirectionRelation(childLayout, val11, val21) {
-        const pd = this._typeToCandidate(val11).getDirection();
-        const cd = childLayout._typeToCandidate(val21).getDirection();
+    #differentDirectionRelation(childLayout, val1, val2) {
+        const pd = this._typeToCandidate(val1).getDirection();
+        const cd = childLayout._typeToCandidate(val2).getDirection();
         if (pd !== $02bdab161dfe53b8$export$c84671f46d6a1ca.NO_DIR && cd !== $02bdab161dfe53b8$export$c84671f46d6a1ca.NO_DIR && pd === cd) return $56599b1fb7a9d24d$export$a32a3c53df62fb64.SAME_DIRECTION;
-        return (0, _stlics.FuzzyRelation).MAX_SATISFACTION_DEGREE;
+        return 1;
     }
     // -------------------------------------------------------------------------
     initializeEstimatedMinimumSize() {
@@ -1133,10 +1160,7 @@ class $56599b1fb7a9d24d$export$a32a3c53df62fb64 extends $b4524a03ecc9c659$export
             height: height
         };
         if (this._states.length === 0) return false;
-        this.getVariable().setDomain(p.createDomain({
-            min: 0,
-            max: this._states.length - 1
-        }));
+        this.getVariable().domain(p.createDomain(0, this._states.length - 1));
         return true;
     }
     #increment(comb, lens) {
@@ -1179,7 +1203,7 @@ class $1f148bf72ade7c2a$export$fbfad3d19c15cd04 extends $02bdab161dfe53b8$export
         super(owner, deg, $02bdab161dfe53b8$export$c84671f46d6a1ca.HORIZONTAL);
     }
     name() {
-        return "horizontal array";
+        return 'horizontal array';
     }
     _calcSize(ss) {
         let width = 0;
@@ -1214,7 +1238,7 @@ class $cc4dcb80c3852878$export$51fe83e77e0dadce extends $02bdab161dfe53b8$export
         super(owner, deg, $02bdab161dfe53b8$export$c84671f46d6a1ca.VERTICAL);
     }
     name() {
-        return "vertical array";
+        return 'vertical array';
     }
     _calcSize(ss) {
         let width = 0;
@@ -1249,7 +1273,7 @@ class $a2dbf6a4680ed696$export$18b48faa63195070 extends $02bdab161dfe53b8$export
         super(owner, deg, $02bdab161dfe53b8$export$c84671f46d6a1ca.HORIZONTAL);
     }
     name() {
-        return "left labeling";
+        return 'left labeling';
     }
     _calcSize(ss) {
         const width = ss[0].width + 1 + ss[1].width + 2;
@@ -1279,7 +1303,7 @@ class $4884c9bf4266a772$export$3d88a90b20ff9f03 extends $02bdab161dfe53b8$export
         super(owner, deg, $02bdab161dfe53b8$export$c84671f46d6a1ca.VERTICAL);
     }
     name() {
-        return "top labeling";
+        return 'top labeling';
     }
     _calcSize(ss) {
         const width = Math.max(ss[0].width, ss[1].width + this.#indent) + 2;
@@ -1306,7 +1330,7 @@ $parcel$export($e331cc23c1a10408$exports, "FControl", ()=>$e331cc23c1a10408$expo
 class $e331cc23c1a10408$export$8884abd4be69784e extends $b4524a03ecc9c659$export$d00c746f5a6c6b {
     name() {
         const can = this._typeToCandidate();
-        return can?.name() ?? "control";
+        return can?.name() ?? 'control';
     }
     initializeEstimatedMinimumSize() {
         let width = Number.MAX_SAFE_INTEGER;
@@ -1333,10 +1357,7 @@ class $e331cc23c1a10408$export$8884abd4be69784e extends $b4524a03ecc9c659$export
             });
         }
         if (this._states.length === 0) return false;
-        this.getVariable().setDomain(p.createDomain({
-            min: 0,
-            max: this._states.length - 1
-        }));
+        this.getVariable().domain(p.createDomain(0, this._states.length - 1));
         return true;
     }
     setWorstDegree(deg) {
@@ -1359,7 +1380,7 @@ class $d657159227f697e6$export$32fbfacc5d962e0c extends $e331cc23c1a10408$export
         this.#shortText = shortText;
     }
     name() {
-        return "caption (" + super.name() + ")";
+        return 'caption (' + super.name() + ')';
     }
     _getCandidateEntries() {
         return [
@@ -1383,7 +1404,7 @@ class $2a82b9db6f278b76$export$96933ea99fed18ef extends $e331cc23c1a10408$export
         this.#items = items;
     }
     name() {
-        return "multiple (" + super.name() + ")";
+        return 'multiple (' + super.name() + ')';
     }
     _getCandidateEntries() {
         const r = $0313106492189ea8$export$41f133550aa26f48.createVariableInstances(0.75, 0.9, this.#items);
@@ -1403,7 +1424,7 @@ class $d2b180a3a10064d6$export$446647c06aeeba4e extends $e331cc23c1a10408$export
         this.#items = items;
     }
     name() {
-        return "single (" + super.name() + ")";
+        return 'single (' + super.name() + ')';
     }
     _getCandidateEntries() {
         const r = $0313106492189ea8$export$41f133550aa26f48.createVariableInstances(0.75, 0.9, this.#items);
@@ -1425,7 +1446,7 @@ class $1db3cea13b9cc444$export$ec067bcfcebc17c extends $e331cc23c1a10408$export$
         this.#itemFalse = itemFalse;
     }
     name() {
-        return "single boolean (" + super.name() + ")";
+        return 'single boolean (' + super.name() + ')';
     }
     _getCandidateEntries() {
         return [
@@ -1535,7 +1556,7 @@ class $3daa3e638ff94731$export$bfecdd4c292f614d {
     #solveProblem(p, possibleDegrees) {
         let time = 0;
         if ($3daa3e638ff94731$export$bfecdd4c292f614d.DEBUG) {
-            console.log("\nsolveProblem - started");
+            console.log('\nsolveProblem - started');
             time = Date.now();
         }
         let success = false;
@@ -1546,35 +1567,37 @@ class $3daa3e638ff94731$export$bfecdd4c292f614d {
             if (r <= 0) continue;
             if ($3daa3e638ff94731$export$bfecdd4c292f614d.DEBUG) console.log(`\tIteration in wsd ${r}`);
             if (!this.#setWorstDegree(p, r)) continue;
-            const solver = new (0, _stlics.FuzzyForwardChecking)(p);
-            solver.setTargetRate(r);
-            if (solver.solve()) {
+            const mon = new (0, _stlics.Monitor)();
+            mon.setTarget(r);
+            mon.setTimeLimit(100);
+            const solver = new (0, _stlics.FuzzyForwardChecking)();
+            if (solver.solve(p, mon)) {
                 success = true;
                 this.#lastDegree = r;
                 break;
             }
         }
         if ($3daa3e638ff94731$export$bfecdd4c292f614d.DEBUG) {
-            console.log(`solveProblem - finished (${success}, wsd = ${p.worstSatisfactionDegree()})\n`);
+            console.log(`solveProblem - finished (${success}, wsd = ${p.degree()})\n`);
             console.log(`time: ${Date.now() - time}`);
         }
         return success;
     }
-    #setWorstDegree(p1, worstDesirability) {
+    #setWorstDegree(p, worstDesirability) {
         const res = this.#root.setWorstDegree(worstDesirability);
         if (!res) {
-            console.log("Failure: initializeDomain");
+            console.log('Failure: initializeDomain');
             return false;
         }
         this.#root.initializeEstimatedMinimumSize();
-        if (!this.#root.initializeDomain(p1)) {
-            console.log("Failure: initializeDomain");
+        if (!this.#root.initializeDomain(p)) {
+            console.log('Failure: initializeDomain');
             return false;
         }
         return true;
     }
-    #sortVariablesInBreadthFirstOrder(p2) {
-        const lens = (0, _stlics.Problems).averagePathLengths(p2);
+    #sortVariablesInBreadthFirstOrder(p) {
+        const lens = (0, _stlics.averagePathLengths)(p);
         const vs = [
             this.#root.getVariable()
         ];
@@ -1590,11 +1613,11 @@ class $3daa3e638ff94731$export$bfecdd4c292f614d {
             for (const l of nls)vs.push(l.getVariable());
             ls = nls;
         }
-        p2.sortVariables((o1, o2)=>{
+        p.sortVariables((o1, o2)=>{
             return vs.indexOf(o1) - vs.indexOf(o2);
         });
     }
-    #sortVariablesInCertainOrder(ls, lens1) {
+    #sortVariablesInCertainOrder(ls, lens) {
         ls.sort((l1, l2)=>{
             if ($3daa3e638ff94731$export$bfecdd4c292f614d.SORT_BY_DESCENDANT) {
                 const ds1 = l1.getDescendantSize();
@@ -1603,8 +1626,8 @@ class $3daa3e638ff94731$export$bfecdd4c292f614d {
                 if (r !== 0) return r;
             }
             if ($3daa3e638ff94731$export$bfecdd4c292f614d.SORT_BY_PATH_LENGTH) {
-                const len1 = lens1[l1.getVariable().index()];
-                const len2 = lens1[l2.getVariable().index()];
+                const len1 = lens[l1.getVariable().index()];
+                const len2 = lens[l2.getVariable().index()];
                 return len2 - len1;
             }
             return 0;
@@ -1612,94 +1635,533 @@ class $3daa3e638ff94731$export$bfecdd4c292f614d {
     }
 }
 
-},{"stlics":"ch4oB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ch4oB":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","stlics/stlics":"g8ZPi"}],"gkKU3":[function(require,module,exports,__globalThis) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, '__esModule', {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === 'default' || key === '__esModule' || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"g8ZPi":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Problem", ()=>$1f9c7ae011a64571$export$559d26475d35ac1e);
-parcelHelpers.export(exports, "CrispProblem", ()=>$c624e9db75d26c9f$export$2d7b2a6964dca148);
-parcelHelpers.export(exports, "Element", ()=>$ae754937ccaa65b0$export$db77ccec0bb4ccac);
-parcelHelpers.export(exports, "Variable", ()=>$8a169d84b9853138$export$c867a5c9595a1350);
-parcelHelpers.export(exports, "ObservableVariable", ()=>$b465f27e32fe405d$export$a14c1bd8f74377e);
-parcelHelpers.export(exports, "Domain", ()=>$79a8d1b9a9fc74d0$export$f102e87ccfb079d0);
-parcelHelpers.export(exports, "DomainArbitrary", ()=>$c390ec7dca5ac321$export$62fe53be9d2bcdd3);
-parcelHelpers.export(exports, "DomainRanged", ()=>$aa858a2a93fead82$export$681548042801f21c);
-parcelHelpers.export(exports, "Constraint", ()=>$e67c82024f87a841$export$aec1359a0a40a615);
-parcelHelpers.export(exports, "Constraint1", ()=>$cefcd65bf0a494eb$export$42d7bbd8a43e587d);
-parcelHelpers.export(exports, "Constraint2", ()=>$7e7c1b07812da051$export$18305a9eb79647d6);
-parcelHelpers.export(exports, "Constraint3", ()=>$e15e0d8061a1d3e1$export$7dc34a7e74bc57bb);
-parcelHelpers.export(exports, "ConstraintN", ()=>$f7435b989104b6d0$export$fd9d2e5591a15c9a);
-parcelHelpers.export(exports, "Relation", ()=>$f4fccc65260d093d$export$b57c6722681faed7);
-parcelHelpers.export(exports, "FuzzyRelation", ()=>$971b718aea973f33$export$3b3c4a6f6988f9e8);
-parcelHelpers.export(exports, "FuzzyTabledRelation", ()=>$c141b9b955cfd62e$export$9af92f8a5a1bfd9d);
-parcelHelpers.export(exports, "FuzzyRelationFunction", ()=>$8954958cf0b6696d$export$292ff2b1fb710ade);
-parcelHelpers.export(exports, "CrispRelation", ()=>$9098286a4d3ce42f$export$182ea39d269dda05);
-parcelHelpers.export(exports, "CrispTabledRelation", ()=>$f7617c3ac8e6cd4a$export$14031e4758dfc3cf);
-parcelHelpers.export(exports, "CrispRelationFunction", ()=>$1772f50825805f1c$export$a1cc6d3c2a0259e4);
-parcelHelpers.export(exports, "CrispRelationView", ()=>$388f571dc59ac25d$export$f47c6ef1c1dceb7d);
-parcelHelpers.export(exports, "FuzzyRelationView", ()=>$388f571dc59ac25d$export$105e23542a0b280f);
-parcelHelpers.export(exports, "Solver", ()=>$e5625d8b51be59c8$export$cca492cadf45c096);
-parcelHelpers.export(exports, "SolverFactory", ()=>$720d3cc47e3bd21f$export$4e442516b8f577ee);
-parcelHelpers.export(exports, "FlexibleLocalChanges", ()=>$3e67a3bbb2d0cdae$export$c15ba88cf158f3d6);
-parcelHelpers.export(exports, "FlexibleLocalChangesEx", ()=>$a2b0456b598cdc15$export$f3429dcb0286bfee);
-parcelHelpers.export(exports, "FuzzyBreakout", ()=>$d7c197e6a4ef7b17$export$151ca5d788220218);
-parcelHelpers.export(exports, "FuzzyForwardChecking", ()=>$8d126dc1fb260d00$export$2d94cf9ddb103458);
-parcelHelpers.export(exports, "FuzzyForwardCheckingBc", ()=>$bbd1d315bf8940be$export$532d5536583284b8);
-parcelHelpers.export(exports, "FuzzyGENET", ()=>$fb3cfe453725e4b3$export$6a3df005617df82a);
-parcelHelpers.export(exports, "SRS3", ()=>$e39b34bae78c1c37$export$4bfabca73d1ccb59);
-parcelHelpers.export(exports, "SRS3_PF", ()=>$56dbbcaaa927a4a2$export$281ed65cbb041503);
-parcelHelpers.export(exports, "Breakout", ()=>$368b031b41e29330$export$44de86bc32e07644);
-parcelHelpers.export(exports, "CrispSRS3", ()=>$6a494cae60277c44$export$193930056f923a8);
-parcelHelpers.export(exports, "ForwardChecking", ()=>$6537b0e1551710d4$export$8570b7b487498488);
-parcelHelpers.export(exports, "GENET", ()=>$59ba6be2773f89c9$export$d94917317b4f74cb);
-parcelHelpers.export(exports, "LocalChanges", ()=>$18724c3268ec037c$export$8153937ab18ca581);
-parcelHelpers.export(exports, "LocalChangesEx", ()=>$16be001e34914685$export$e577c7182ffc977b);
-parcelHelpers.export(exports, "MaxForwardChecking", ()=>$0c5cdff78dc8648d$export$2a32484f7cb0d846);
-parcelHelpers.export(exports, "AC3", ()=>$d10fdff0b3f22a66$export$ac824f187e852f5a);
-parcelHelpers.export(exports, "NodeConsistency", ()=>$a8cdbbce0cfe8aee$export$975ddbe83e2b310a);
-parcelHelpers.export(exports, "PostStabilization", ()=>$c5e681ea32920ad2$export$52631f16ca582d39);
-parcelHelpers.export(exports, "Problems", ()=>$e26450ba7c736240$export$32fae9b8f93405d0);
-parcelHelpers.export(exports, "Assignment", ()=>$9bc6df20db8be0bf$export$e6b39d88cc0d636);
-parcelHelpers.export(exports, "AssignmentList", ()=>$d7051a715721e7ce$export$1d4e454bcd46f18f);
-parcelHelpers.export(exports, "DomainPruner", ()=>$f7b05997b0c3179b$export$f307752a90139b0e);
-parcelHelpers.export(exports, "LoopDetector", ()=>$ef2881bbdac82876$export$136021658ac30d9);
-function $parcel$export(e, n, v, s) {
-    Object.defineProperty(e, n, {
-        get: v,
-        set: s,
-        enumerable: true,
-        configurable: true
-    });
-}
-var $1f9c7ae011a64571$exports = {};
-$parcel$export($1f9c7ae011a64571$exports, "Problem", ()=>$1f9c7ae011a64571$export$559d26475d35ac1e);
+var _problem = require("./src/problem/problem");
+parcelHelpers.exportAll(_problem, exports);
+var _element = require("./src/problem/element");
+parcelHelpers.exportAll(_element, exports);
+var _variable = require("./src/problem/variable");
+parcelHelpers.exportAll(_variable, exports);
+var _domain = require("./src/problem/domain");
+parcelHelpers.exportAll(_domain, exports);
+var _constraint = require("./src/problem/constraint");
+parcelHelpers.exportAll(_constraint, exports);
+// -----------------------------------------------------------------------------
+var _solver = require("./src/solver/solver");
+parcelHelpers.exportAll(_solver, exports);
+var _monitor = require("./src/solver/monitor");
+parcelHelpers.exportAll(_monitor, exports);
+var _flexibleLocalChanges = require("./src/solver/fuzzy/flexible-local-changes");
+parcelHelpers.exportAll(_flexibleLocalChanges, exports);
+var _fullChecking = require("./src/solver/fuzzy/full-checking");
+parcelHelpers.exportAll(_fullChecking, exports);
+var _fuzzyBreakout = require("./src/solver/fuzzy/fuzzy-breakout");
+parcelHelpers.exportAll(_fuzzyBreakout, exports);
+var _fuzzyForwardChecking = require("./src/solver/fuzzy/fuzzy-forward-checking");
+parcelHelpers.exportAll(_fuzzyForwardChecking, exports);
+var _fuzzyGenet = require("./src/solver/fuzzy/fuzzy-genet");
+parcelHelpers.exportAll(_fuzzyGenet, exports);
+var _srs3 = require("./src/solver/fuzzy/srs3");
+parcelHelpers.exportAll(_srs3, exports);
+var _breakout = require("./src/solver/crisp/breakout");
+parcelHelpers.exportAll(_breakout, exports);
+var _crispSrs3 = require("./src/solver/crisp/crisp-srs3");
+parcelHelpers.exportAll(_crispSrs3, exports);
+var _forwardChecking = require("./src/solver/crisp/forward-checking");
+parcelHelpers.exportAll(_forwardChecking, exports);
+var _genet = require("./src/solver/crisp/genet");
+parcelHelpers.exportAll(_genet, exports);
+var _localChanges = require("./src/solver/crisp/local-changes");
+parcelHelpers.exportAll(_localChanges, exports);
+var _maxForwardChecking = require("./src/solver/crisp/max-forward-checking");
+parcelHelpers.exportAll(_maxForwardChecking, exports);
+var _ac3 = require("./src/solver/filter/ac3");
+parcelHelpers.exportAll(_ac3, exports);
+var _nodeConsistency = require("./src/solver/filter/node-consistency");
+parcelHelpers.exportAll(_nodeConsistency, exports);
+var _postStabilizer = require("./src/solver/filter/post-stabilizer");
+parcelHelpers.exportAll(_postStabilizer, exports);
+var _assignment = require("./src/solver/misc/assignment");
+parcelHelpers.exportAll(_assignment, exports);
+var _assignmentList = require("./src/solver/misc/assignment-list");
+parcelHelpers.exportAll(_assignmentList, exports);
+var _consistency = require("./src/solver/misc/consistency");
+parcelHelpers.exportAll(_consistency, exports);
+var _domainPruner = require("./src/solver/misc/domain-pruner");
+parcelHelpers.exportAll(_domainPruner, exports);
+var _random = require("./src/solver/misc/random");
+parcelHelpers.exportAll(_random, exports);
+// -----------------------------------------------------------------------------
+var _loopDetector = require("./src/util/loop-detector");
+parcelHelpers.exportAll(_loopDetector, exports);
+var _problems = require("./src/util/problems");
+parcelHelpers.exportAll(_problems, exports);
+var _variables = require("./src/util/variables");
+parcelHelpers.exportAll(_variables, exports);
+var _relations = require("./src/util/relations");
+parcelHelpers.exportAll(_relations, exports);
+var _solverFactory = require("./src/util/solver-factory");
+parcelHelpers.exportAll(_solverFactory, exports);
+
+},{"./src/problem/problem":"4Nvsk","./src/problem/element":"2JAfT","./src/problem/variable":"1Z7Sx","./src/problem/domain":"8V9SU","./src/problem/constraint":"f8NRr","./src/solver/solver":"dvfQo","./src/solver/monitor":"35O01","./src/solver/fuzzy/flexible-local-changes":"2juau","./src/solver/fuzzy/full-checking":"gYH7K","./src/solver/fuzzy/fuzzy-breakout":"JK6En","./src/solver/fuzzy/fuzzy-forward-checking":"6vCMZ","./src/solver/fuzzy/fuzzy-genet":"ezeI0","./src/solver/fuzzy/srs3":"5QD09","./src/solver/crisp/breakout":"fSOIG","./src/solver/crisp/crisp-srs3":"gtT5Y","./src/solver/crisp/forward-checking":"8meAj","./src/solver/crisp/genet":"bqKOq","./src/solver/crisp/local-changes":"aIVCa","./src/solver/crisp/max-forward-checking":"5geKS","./src/solver/filter/ac3":"4nXpt","./src/solver/filter/node-consistency":"arUPL","./src/solver/filter/post-stabilizer":"41sLb","./src/solver/misc/assignment":"bZiv3","./src/solver/misc/assignment-list":"7XBf8","./src/solver/misc/consistency":"knMRR","./src/solver/misc/domain-pruner":"9ljra","./src/solver/misc/random":"5CZO5","./src/util/loop-detector":"5Ey8F","./src/util/problems":"kAwtv","./src/util/variables":"1D2XX","./src/util/relations":"6dYYD","./src/util/solver-factory":"fZNVH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4Nvsk":[function(require,module,exports,__globalThis) {
 /**
  * The class represents a constraint satisfaction problem.
  *
  * @author Takuto Yanagida
- * @version 2023-04-16
- */ var $8a169d84b9853138$exports = {};
-$parcel$export($8a169d84b9853138$exports, "Variable", ()=>$8a169d84b9853138$export$c867a5c9595a1350);
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Problem", ()=>Problem);
+var _variable = require("./variable");
+var _domain = require("./domain");
+var _constraint = require("./constraint");
+class Problem {
+    #fv;
+    #fc;
+    #xs;
+    #cs;
+    // Methods for Modifying Factories -----------------------------------------
+    /**
+	 * Sets a variable factory.
+	 */ setVariableFactory(fn) {
+        this.#fv = fn;
+    }
+    /**
+	 * Sets a variable factory.
+	 */ setConstraintFactory(fn) {
+        this.#fc = fn;
+    }
+    // Generation Methods ------------------------------------------------------
+    /**
+	 * Adds a variable to this problem.
+	 * @param Variable v A variable.
+	 */ addVariable(x) {
+        x.setIndex(this.#xs.length);
+        this.#xs.push(x);
+    }
+    createDomain(vs_min, max = null) {
+        if (Array.isArray(vs_min)) return (0, _domain.Domain).create(vs_min);
+        else if (null !== max) return (0, _domain.Domain).create(vs_min, max);
+        throw new RangeError();
+    }
+    createVariable(x_d, value = null, name) {
+        if (x_d instanceof (0, _variable.Variable)) {
+            const x = this.#fv(x_d.domain());
+            this.addVariable(x);
+            x.setName(x.name());
+            x.assign(x.value());
+            return x;
+        } else if (x_d instanceof (0, _domain.Domain)) {
+            if (value !== null && !x_d.contains(value)) throw new Error();
+            const x = this.#fv(x_d);
+            this.addVariable(x);
+            if (value !== null) x.assign(value);
+            if (name) x.setName(name);
+            return x;
+        }
+        throw new RangeError();
+    }
+    /**
+	 * Generates a constraint.
+	 * @param relation A relation.
+	 * @param xs       Variables.
+	 * @param name     Display name.
+	 * @return A constraint.
+	 */ createConstraint(relation, xs, name) {
+        const c = this.#fc(relation, xs);
+        c.setIndex(this.#cs.length);
+        this.#cs.push(c);
+        for (const x of xs)x.connect(c);
+        if (name) c.setName(name);
+        return c;
+    }
+    //  Modification Methods ---------------------------------------------------
+    /**
+	 * Remove the constraint.
+	 * @param c Constraints to be removed.
+	 */ removeConstraint(c) {
+        const index = this.#cs.indexOf(c);
+        this.#cs.splice(index, 1);
+        for(let i = index; i < this.#cs.length; ++i)this.#cs[i].setIndex(i);
+        for (const x of c)x.disconnect(c);
+    }
+    /**
+	 * Changes the status of all variables to unassigned.
+	 */ clearAllVariables() {
+        for (const x of this.#xs)x.clear();
+    }
+    /**
+	 * Reverse the order of variables.
+	 * The index of each variable is reassigned.
+	 */ reverseVariables() {
+        this.#xs.reverse();
+        for(let i = 0; i < this.#xs.length; ++i)this.#xs[i].setIndex(i);
+    }
+    /**
+	 * Sorts variables using a specified comparator.
+	 * The index of each variable is reassigned.
+	 * @param comparator A comparator.
+	 */ sortVariables(comparator) {
+        this.#xs.sort(comparator);
+        for(let i = 0; i < this.#xs.length; ++i)this.#xs[i].setIndex(i);
+    }
+    // Methods for Variables ---------------------------------------------------
+    /**
+	 * Returns the list of variables.
+	 * The returned list is not allowed to be modified.
+	 * @return The variable list.
+	 */ variables() {
+        return this.#xs;
+    }
+    /**
+	 * Gets the number of variables in the problem.
+	 * @return Number of variables
+	 */ variableSize() {
+        return this.#xs.length;
+    }
+    /**
+	 * Gets a variable by index.
+	 * @param index Index (0 <= index < variableSize()).
+	 * @return A variable
+	 */ variableAt(index) {
+        return this.#xs[index];
+    }
+    /**
+	 * Gets a variable by name.
+	 * @param name Name.
+	 * @return A variable.
+	 */ variableOf(name) {
+        for (const x of this.#xs){
+            if (x.name() === name) return x;
+        }
+        return null;
+    }
+    /**
+	 * Returns whether the variable is contained or not.
+	 * @param x A variable.
+	 * @return True if contained.
+	 */ hasVariable(x) {
+        return this.#xs.includes(x);
+    }
+    // Methods for Constraints -------------------------------------------------
+    /**
+	 * Returns the list of constraint.
+	 * The returned list is not allowed to be modified.
+	 * @return The constraint list.
+	 */ constraints() {
+        return this.#cs;
+    }
+    /**
+	 * Gets the number of constraints in the problem.
+	 * @return Number of constraints
+	 */ constraintSize() {
+        return this.#cs.length;
+    }
+    /**
+	 * Gets a constraint by index.
+	 * @param index Index (0 <= index < constraintSize()).
+	 * @return A constraint.
+	 */ constraintAt(index) {
+        return this.#cs[index];
+    }
+    /**
+	 * Gets a constraint by name.
+	 * @param name Name.
+	 * @return A constraint.
+	 */ constraintOf(name) {
+        for (const c of this.#cs){
+            if (c.name() === name) return c;
+        }
+        return null;
+    }
+    /**
+	 * Returns whether the constraint is contained or not.
+	 * @param c A constraint
+	 * @return True if contained.
+	 */ hasConstraint(c) {
+        return this.#cs.includes(c);
+    }
+    /**
+	 * Gets the constraints that exist between the specified variables.
+	 * Returns an empty array if no constraints exist.
+	 * If there are multiple constraints between two variables (including the case of n-ary constraints (2 < n)), they will be included in the return array.
+	 * @param v1 Variable 1
+	 * @param v2 Variable 2
+	 * @return Constraints.
+	 */ constraintsBetween(v1, v2) {
+        const cs = [];
+        for (const c of v1)if (c.has(v2)) cs.push(c);
+        return cs;
+    }
+    // State acquisition methods -----------------------------------------------
+    /**
+	 * Gets the constraint density (number of constraints/number of variables).
+	 * @return Constraint density.
+	 */ constraintDensity() {
+        return this.#cs.length / this.#xs.length;
+    }
+    /**
+	 * Returns the number of variables in the problem that have not been assigned a value.
+	 * @return Number of variables with no value assigned.
+	 */ emptySize() {
+        let n = 0;
+        for (const x of this.#xs)n += x.isEmpty() ? 1 : 0;
+        return n;
+    }
+    /**
+	 * Returns whether the constraint satisfaction problem has any variables with empty domain.
+	 * @return True if it exists.
+	 */ hasEmptyDomain() {
+        for (const x of this.#xs){
+            if (x.domain().size() === 0) return true;
+        }
+        return false;
+    }
+    /**
+	 * Returns the worst satisfaction degree for the constraints contained in the fuzzy constraint satisfaction problem.
+	 * If the degree cannot be determined because the variable has not yet been assigned a value or for some other reason, -1 is returned.
+	 * @return Worst satisfaction degree.
+	 */ degree() {
+        let cur = 1;
+        for (const c of this.#cs){
+            const ev = c.degree();
+            if (ev < 0) return ev;
+            if (ev < cur) cur = ev;
+        }
+        return cur;
+    }
+    /**
+	 * Finds the set of worst satisfiable constraints in a fuzzy constraint satisfaction problem.
+	 * @return Array of constraints and worst satisfaction degree.
+	 */ constraintsWithDegree() {
+        const cs = [];
+        let cur = 1;
+        for (const c of this.#cs){
+            const ev = c.degree();
+            if (ev < cur) {
+                cur = ev;
+                cs.length = 0;
+                cs.push(c);
+            } else if (ev - cur < Number.MIN_VALUE * 10) cs.push(c);
+        }
+        return [
+            cs,
+            cur
+        ];
+    }
+    /**
+	 * Gets the average of satisfaction degrees of the fuzzy constraints.
+	 * @return Average of satisfaction degrees.
+	 */ averageDegree() {
+        let s = 0;
+        for (const c of this.#cs)s += c.degree();
+        return s / this.#cs.length;
+    }
+    /**
+	 * Returns the rate of constraints that are satisfied out of all constraints.
+	 * @return Rate of satisfied constraints.
+	 */ ratio() {
+        return this.satisfiedConstraintSize() / this.#cs.length;
+    }
+    /**
+	 * Returns the number of satisfied constraints.
+	 * Undefined constraints are ignored.
+	 * @return Number of satisfied constraints.
+	 */ satisfiedConstraintSize() {
+        let n = 0;
+        for (const c of this.#cs)n += c.status() === 1 ? 1 : 0;
+        return n;
+    }
+    /**
+	 * Returns the number of violating constraints.
+	 * Undefined constraints are ignored.
+	 * @return Number of violating constraints.
+	 */ violatingConstraintSize() {
+        return this.#cs.length - this.satisfiedConstraintSize();
+    }
+    /**
+	 * Returns a list of satisfied constraints.
+	 * Undefined constraints are ignored.
+	 * @return Array of constraints.
+	 */ satisfiedConstraints() {
+        const cs = [];
+        for (const c of this.#cs)if (c.status() === 1) cs.push(c);
+        return cs;
+    }
+    /**
+	 * Returns a list of violating constraints.
+	 * Undefined constraints are ignored.
+	 * @return Array of constraints.
+	 */ violatingConstraints() {
+        const cs = [];
+        for (const c of this.#cs)if (c.status() === 0) cs.push(c);
+        return cs;
+    }
+    constructor(){
+        this.#fv = (d)=>new (0, _variable.Variable)(d);
+        this.#fc = (r, xs)=>(0, _constraint.Constraint).create(r, xs);
+        this.#xs = [];
+        this.#cs = [];
+    }
+}
+
+},{"./variable":"1Z7Sx","./domain":"8V9SU","./constraint":"f8NRr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1Z7Sx":[function(require,module,exports,__globalThis) {
 /**
- * Class that represents a variable.
+ * The class that represents a variable.
  *
  * @author Takuto Yanagida
- * @version 2023-04-18
- */ var $ae754937ccaa65b0$exports = {};
-$parcel$export($ae754937ccaa65b0$exports, "Element", ()=>$ae754937ccaa65b0$export$db77ccec0bb4ccac);
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Variable", ()=>Variable);
+var _element = require("./element");
+class Variable extends (0, _element.Element) {
+    static #INVALID = Number.MIN_VALUE;
+    // Called only from Problem.
+    constructor(d){
+        super(), this.es = [], this.v = Variable.#INVALID;
+        this.d = d;
+    }
+    /**
+	 * Gets a string representation.
+	 * @return A string representation.
+	 */ toString() {
+        const n = this.name();
+        const np = n ? `(${n})` : '';
+        const sn = this.isEmpty() ? '<empty>' : '' + this.value();
+        return `x${this.index()}${np} = ${sn}`;
+    }
+    /**
+	 * Gets the number of associated constraints.
+	 * @return Number of constraints.
+	 */ size() {
+        return this.es.length;
+    }
+    /**
+	 * Gets the associated constraint by specifying its index.
+	 * @param index Index.
+	 * @return A constraint.
+	 */ at(index) {
+        return this.es.at(index);
+    }
+    /**
+	 * Checks whether or not the specified constraint is associated.
+	 * @param c A constraint.
+	 * @return True if associated.
+	 */ has(c) {
+        return this.es.includes(c);
+    }
+    /**
+	 * Gets the index of a specified constraint.
+	 * If not found, returns -1.
+	 * @param c A constraint.
+	 * @return Index.
+	 */ indexOf(c) {
+        return this.es.indexOf(c);
+    }
+    /**
+	 * Collects the variables connected via the associated constraints.
+	 * @return An array of variables
+	 */ neighbors() {
+        const xs = [];
+        for (const c of this.es){
+            for (const x of c)if (x !== this) xs.push(x);
+        }
+        return xs;
+    }
+    /**
+	 * Gets the iterator of the associated constraints.
+	 */ [Symbol.iterator]() {
+        return this.es[Symbol.iterator]();
+    }
+    // -------------------------------------------------------------------------
+    // Called only from Problem.
+    connect(c) {
+        if (this.es.includes(c)) throw new RangeError();
+        this.es.push(c);
+    }
+    // Called only from Problem.
+    disconnect(c) {
+        if (!this.es.includes(c)) throw new RangeError();
+        this.es = this.es.filter((i)=>i !== c);
+    }
+    domain(d) {
+        if (d === undefined) return this.d;
+        else {
+            this.d = d;
+            this.clear();
+        }
+    }
+    /**
+	 * Assign a value.
+	 * @param value Value.
+	 */ assign(value) {
+        this.v = value; // Do not change #val except here.
+    }
+    /**
+	 * Sets the state of the variable to unassigned.
+	 */ clear() {
+        // Do not use the invalid value except here and below (isEmpty).
+        this.assign(Variable.#INVALID);
+    }
+    /**
+	 * Gets the value of the variable.
+	 * @returnThe value of the variable.
+	 */ value() {
+        return this.v;
+    }
+    /**
+	 * Checks whether the value is unassigned or not.
+	 * @return True if unassigned.
+	 */ isEmpty() {
+        return this.value() === Variable.#INVALID;
+    }
+}
+
+},{"./element":"2JAfT","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2JAfT":[function(require,module,exports,__globalThis) {
 /**
  * The common class of variables and constraints.
  *
  * @author Takuto Yanagida
- * @version 2022-08-15
- */ class $ae754937ccaa65b0$export$db77ccec0bb4ccac {
-    #index = -1;
-    #name = "";
-    /**
-	 * It is used when the user wishes to associate an arbitrary object with each element.
-	 */ userObject = null;
-    /**
-	 * Used when the solver wants to associate an arbitrary object with each element.
-	 */ solverObject = null;
+ * @version 2025-01-02
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Element", ()=>Element);
+class Element {
+    #index;
+    #name;
     // Called only from Problem.
     setIndex(index) {
         this.#index = index;
@@ -1707,7 +2169,7 @@ $parcel$export($ae754937ccaa65b0$exports, "Element", ()=>$ae754937ccaa65b0$expor
     /**
 	 * Sets the name.
 	 *
-	 * @param name String representing the name.
+	 * @param name string representing the name.
 	 */ setName(name) {
         this.#name = name;
     }
@@ -1726,165 +2188,59 @@ $parcel$export($ae754937ccaa65b0$exports, "Element", ()=>$ae754937ccaa65b0$expor
 	 */ name() {
         return this.#name;
     }
-}
-class $8a169d84b9853138$export$c867a5c9595a1350 extends $ae754937ccaa65b0$export$db77ccec0bb4ccac {
-    static #INVALID = Number.MIN_VALUE;
-    #owner;
-    #dom;
-    #val = $8a169d84b9853138$export$c867a5c9595a1350.#INVALID;
-    #cons = [];
-    // Called only from Problem.
-    constructor(owner, d){
-        super();
-        this.#owner = owner;
-        this.#dom = d;
-    }
-    // Called only from Problem.
-    connect(c1) {
-        if (this.has(c1)) throw new IllegalArgumentException();
-        this.#cons.push(c1);
-    }
-    // Called only from Problem.
-    disconnect(c1) {
-        if (!this.has(c1)) throw new IllegalArgumentException();
-        this.#cons = this.#cons.filter((n)=>n !== c1);
-    }
-    /**
-	 * Assign a value.
-	 * @param value Value.
-	 */ assign(value) {
-        this.#val = value; // Do not change #val except here.
-    }
-    /**
-	 * Sets the state of the variable to unassigned.
-	 */ clear() {
-        this.assign($8a169d84b9853138$export$c867a5c9595a1350.#INVALID); // Do not use the invalid value except here and below (isEmpty).
-    }
-    /**
-	 * Checks whether the value is unassigned or not.
-	 * @return True if unassigned.
-	 */ isEmpty() {
-        return this.value() === $8a169d84b9853138$export$c867a5c9595a1350.#INVALID;
-    }
-    /**
-	 * Assign the domain.
-	 * The variable will be in unassigned state.
-	 * @param d Domain to be assigned.
-	 */ setDomain(d) {
-        this.#dom = d;
-        this.clear();
-    }
-    /**
-	 * Gets the problem that owns this variable.
-	 * @return Owner.
-	 */ owner() {
-        return this.#owner;
-    }
-    /**
-	 * Gets the number of associated constraints.
-	 * @return Number of constraints.
-	 */ size() {
-        return this.#cons.length;
-    }
-    /**
-	 * Gets the associated constraints by specifying their indices.
-	 * @param index Index.
-	 * @return A constraint.
-	 */ at(index) {
-        return this.#cons[index];
-    }
-    /**
-	 * Gets the iterator of the associated constraints.
-	 */ [Symbol.iterator]() {
-        return this.#cons[Symbol.iterator]();
-    }
-    /**
-	 * Gets the domain of the variable.
-	 * @return The domain.
-	 */ domain() {
-        return this.#dom;
-    }
-    /**
-	 * Checks whether or not the variable is associated with the specified constraint.
-	 * @param c A constraint.
-	 * @return True if associated.
-	 */ has(c1) {
-        return this.#cons.includes(c1);
-    }
-    /**
-	 * Gets a string representation.
-	 * @return A string representation.
-	 */ toString() {
-        return `x${this.index()}${this.name() === "" ? "" : `(${this.name()})`} = ${this.isEmpty() ? "<empty>" : this.value()}`;
-    }
-    /**
-	 * Gets the value of the variable.
-	 * @returnThe value of the variable.
-	 */ value() {
-        return this.#val;
-    }
-    /**
-	 * Collects the variables connected via the associated constraints.
-	 * @return An array of variables
-	 */ neighbors() {
-        const vs = [];
-        for (const c1 of this.#cons){
-            for (const v of c1)if (v !== this) vs.push(v);
-        }
-        return vs;
+    constructor(){
+        this.#index = -1;
+        this.#name = '';
+        /**
+	 * It is used when the user wishes to associate an arbitrary object with each element.
+	 */ this.userObject = null;
     }
 }
-var $aa858a2a93fead82$exports = {};
-$parcel$export($aa858a2a93fead82$exports, "DomainRanged", ()=>$aa858a2a93fead82$export$681548042801f21c);
-/**
- * A variable domain with contiguous integer elements.
- *
- * @author Takuto Yanagida
- * @version 2023-04-10
- */ var $79a8d1b9a9fc74d0$exports = {};
-$parcel$export($79a8d1b9a9fc74d0$exports, "Domain", ()=>$79a8d1b9a9fc74d0$export$f102e87ccfb079d0);
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8V9SU":[function(require,module,exports,__globalThis) {
 /**
  * An abstract class that represents a variable domain.
  * The domain is immutable.
  *
  * @author Takuto Yanagida
- * @version 2023-04-10
- */ class $79a8d1b9a9fc74d0$export$f102e87ccfb079d0 {
-    /**
-	 * Checks whether the specified value is included as an element of the domain.
-	 *
-	 * @param val A value.
-	 * @return True if the value is included.
-	 */ contains(val) {}
-    /**
-	 * Gets the index of the specified value. If it does not exist, -1 is returned.
-	 *
-	 * @param val A value.
-	 * @return The index.
-	 */ indexOf(val) {}
-    /**
-	 * Gets the size of the domain, including the pruned elements.
-	 *
-	 * @return The size.
-	 */ size() {}
-    /**
-	 * Gets the value at the specified index. The retrieved value may have been pruned.
-	 *
-	 * @param index An index.
-	 * @return The value.
-	 */ at(index) {}
-    /**
-	 * Gets the iterator of the values of the domain.
-	 */ [Symbol.iterator]() {}
-    /**
-	 * Gets an arbitrary value, regardless of whether it has been pruned or not.
-	 *
-	 * @return A value.
-	 */ random() {
-        return this.at(Math.floor(Math.random() * this.size()));
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Domain", ()=>Domain);
+class Domain {
+    static create(vs_min, max = null) {
+        if (Array.isArray(vs_min)) return new DomainArbitrary(vs_min);
+        else if (null !== max) return new DomainRanged(vs_min, max);
+        throw new RangeError();
     }
 }
-class $aa858a2a93fead82$export$681548042801f21c extends $79a8d1b9a9fc74d0$export$f102e87ccfb079d0 {
+// -----------------------------------------------------------------------------
+class DomainArbitrary extends Domain {
+    #vs;
+    constructor(vs){
+        super();
+        this.#vs = [
+            ...vs
+        ];
+    }
+    contains(v) {
+        return this.#vs.includes(v);
+    }
+    indexOf(v) {
+        return this.#vs.indexOf(v);
+    }
+    size() {
+        return this.#vs.length;
+    }
+    at(index) {
+        return this.#vs[index];
+    }
+    [Symbol.iterator]() {
+        return this.#vs[Symbol.iterator]();
+    }
+}
+// -----------------------------------------------------------------------------
+class DomainRanged extends Domain {
     #min;
     #max;
     constructor(min, max){
@@ -1892,1341 +2248,274 @@ class $aa858a2a93fead82$export$681548042801f21c extends $79a8d1b9a9fc74d0$export
         this.#min = min | 0;
         this.#max = max | 0;
     }
-    /**
-	 * {@inheritDoc}
-	 */ contains(val) {
-        return this.#min <= val && val <= this.#max;
+    contains(v) {
+        return this.#min <= v && v <= this.#max;
     }
-    /**
-	 * {@inheritDoc}
-	 */ indexOf(val) {
-        return this.#min <= val && val <= this.#max ? val - this.#min : -1;
+    indexOf(v) {
+        return this.#min <= v && v <= this.#max ? v - this.#min : -1;
     }
-    /**
-	 * {@inheritDoc}
-	 */ size() {
+    size() {
         return this.#max - this.#min + 1;
     }
-    /**
-	 * {@inheritDoc}
-	 */ at(index) {
+    at(index) {
         return this.#min + index;
     }
-    /**
-	 * {@inheritDoc}
-	 */ [Symbol.iterator]() {
-        let val = this.#min;
+    [Symbol.iterator]() {
+        let v = this.#min;
+        const max = this.#max;
         return {
-            next: ()=>val <= this.#max ? {
-                    value: val++,
+            next () {
+                if (v <= max) return {
+                    value: v++,
                     done: false
-                } : {
+                };
+                else return {
+                    value: null,
                     done: true
-                }
+                };
+            }
         };
     }
 }
-var $c390ec7dca5ac321$exports = {};
-$parcel$export($c390ec7dca5ac321$exports, "DomainArbitrary", ()=>$c390ec7dca5ac321$export$62fe53be9d2bcdd3);
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"f8NRr":[function(require,module,exports,__globalThis) {
 /**
- * A variable domain with arbitrary elements.
+ * The class that represents a constraint.
  *
  * @author Takuto Yanagida
- * @version 2023-04-10
- */ class $c390ec7dca5ac321$export$62fe53be9d2bcdd3 extends $79a8d1b9a9fc74d0$export$f102e87ccfb079d0 {
-    #vals;
-    constructor(vals){
-        super();
-        this.#vals = [
-            ...vals
-        ];
-    }
-    /**
-	 * {@inheritDoc}
-	 */ contains(val) {
-        return this.#vals.includes(val);
-    }
-    /**
-	 * {@inheritDoc}
-	 */ indexOf(val) {
-        return this.#vals.indexOf(val);
-    }
-    /**
-	 * {@inheritDoc}
-	 */ size() {
-        return this.#vals.length;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ at(index) {
-        return this.#vals[index];
-    }
-    /**
-	 * {@inheritDoc}
-	 */ [Symbol.iterator]() {
-        return this.#vals[Symbol.iterator]();
-    }
-}
-var $e67c82024f87a841$exports = {};
-$parcel$export($e67c82024f87a841$exports, "Constraint", ()=>$e67c82024f87a841$export$aec1359a0a40a615);
-/**
- * The class represents a constraint.
- *
- * @author Takuto Yanagida
- * @version 2023-04-11
- */ var $971b718aea973f33$exports = {};
-$parcel$export($971b718aea973f33$exports, "FuzzyRelation", ()=>$971b718aea973f33$export$3b3c4a6f6988f9e8);
-/**
- * The class represents fuzzy relationships between variables.
- *
- * @author Takuto Yanagida
- * @version 2023-03-25
- */ var $f4fccc65260d093d$exports = {};
-$parcel$export($f4fccc65260d093d$exports, "Relation", ()=>$f4fccc65260d093d$export$b57c6722681faed7);
-/**
- * An interface that represents the relationship between variables.
- * Use CrispRelation or FuzzyRelation class that implement this interface.
- *
- * @author Takuto Yanagida
- * @version 2023-03-25
- */ class $f4fccc65260d093d$export$b57c6722681faed7 {
-}
-class $971b718aea973f33$export$3b3c4a6f6988f9e8 extends $f4fccc65260d093d$export$b57c6722681faed7 {
-    /**
-	 * Gets the satisfaction degree in this fuzzy relation.
-	 * @param vals Values of each variable
-	 * @return A satisfaction degree d (0 <= d <= 1).
-	 */ satisfactionDegree(...vals) {
-        throw new Exception();
-    }
-    /**
-	 * Returns a view as a crisp relation.
-	 * @return A crisp relation.
-	 */ asCrispRelation() {
-        return new CrispRelationView(this);
-    }
-}
-class $e67c82024f87a841$export$aec1359a0a40a615 extends $ae754937ccaa65b0$export$db77ccec0bb4ccac {
-    /**
-	 * The constant indicating that the satisfaction degree is not defined.
-	 */ static UNDEFINED = -1;
-    rel;
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Constraint", ()=>Constraint);
+var _element = require("./element");
+class Constraint extends (0, _element.Element) {
     // Called only from Problem.
+    static create(r, xs) {
+        if (1 === xs.length) return new Constraint1(r, xs[0]);
+        if (2 === xs.length) return new Constraint2(r, xs[0], xs[1]);
+        if (3 === xs.length) return new Constraint3(r, xs[0], xs[1], xs[2]);
+        return new ConstraintN(r, ...xs);
+    }
     constructor(r){
-        super();
-        this.rel = r;
+        super(), this.es = [];
+        this.r = r;
     }
     /**
-	 * Returns the crisp relation between variables.
-	 * @return Relation.
-	 */ crispRelation() {
-        return this.rel;
-    }
-    /**
-	 * Returns the fuzzy relation between variables.
-	 * @return Relation.
-	 */ fuzzyRelation() {
-        return this.rel;
-    }
-    /**
-	 * Returns whether this is a fuzzy constraint.
-	 * @return True if it is fuzzy constraint.
-	 */ isFuzzy() {
-        return this.rel instanceof $971b718aea973f33$export$3b3c4a6f6988f9e8;
-    }
-    /**
-	 * Returns a string representation.
+	 * Gets a string representation.
 	 * @return A string representation.
 	 */ toString() {
-        const s = this.satisfactionDegree();
-        return `c${this.index()}${this.name() === "" ? "" : `(${this.name()})`} = ${s === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED ? "UNDEFINED" : s}`;
+        const n = this.name();
+        const np = n ? `(${n})` : '';
+        const ev = this.degree();
+        const sn = ev < 0 /* ev === UNDEFINED */  ? 'UNDEFINED' : '' + ev;
+        return `c${this.index()}${np} = ${sn}`;
     }
     /**
-	 * Returns the order of the constraint, i.e., the number of (associated) variables in the scope.
+	 * Gets the order of the constraint, i.e., the number of (associated) variables in the scope.
 	 * @return Order.
-	 */ size() {}
+	 */ size() {
+        return this.es.length;
+    }
     /**
 	 * Gets the associated variable by specifying its index.
 	 * @param index Index.
 	 * @return A variable.
-	 */ at(index) {}
+	 */ at(index) {
+        return this.es.at(index);
+    }
     /**
-	 * Gets the iterator of the associated variables.
-	 */ [Symbol.iterator]() {}
-    /**
-	 * Returns whether the specified variable is associated or not.
-	 * @param v A variable.
-	 * @return True if it is associated.
-	 */ has(v) {}
+	 * Checks whether or not the specified variable is associated.
+	 * @param x A variable.
+	 * @return True if associated.
+	 */ has(x) {
+        return this.es.includes(x);
+    }
     /**
 	 * Gets the index of a specified variable.
 	 * If not found, returns -1.
-	 * @param v A variable.
+	 * @param x A variable.
 	 * @return Index.
-	 */ indexOf(v) {}
-    /**
-	 * Returns the number of scope variables that have not been assigned a value.
-	 * @return Number of variables
-	 */ emptyVariableSize() {}
-    /**
-	 * Returns whether or not the satisfaction (degree) is defined.
-	 * Satisfaction (degree) is defined when all associated variables have values assigned to them.
-	 * @return True if it is defined.
-	 */ isDefined() {}
-    /**
-	 * Returns whether or not this constraint is satisfied.
-	 * @return 1 if satisfied, 0 if not, UNDEFINED if undefined
-	 */ isSatisfied() {}
-    /**
-	 * Gets the current satisfaction degree.
-	 * @return Degree 0 - 1, UNDEFINED if undefined.
-	 */ satisfactionDegree() {}
-    /**
-	 * Returns the set of constraints connected via the associated variables.
-	 * @return A set of constraints.
-	 */ neighbors() {}
-    /**
-	 * Calculates the highest consistency degree.
-	 * That is, it seeks the highest satisfaction degree of the possible combinations of variable assignments for a given constraint.
-	 * When all associated variables have been assigned values, it returns the same value as getSatisfactionDegree().
-	 * @return The highest consistency degree.
-	 */ highestConsistencyDegree() {}
-    /**
-	 * Calculates the lowest consistency degree.
-	 * That is, it seeks the lowest satisfaction degree of the possible combinations of variable assignments for a given constraint.
-	 * When all associated variables have been assigned values, it returns the same value as getSatisfactionDegree().
-	 * @return The lowest consistency degree.
-	 */ lowestConsistencyDegree() {}
-}
-var $cefcd65bf0a494eb$exports = {};
-$parcel$export($cefcd65bf0a494eb$exports, "Constraint1", ()=>$cefcd65bf0a494eb$export$42d7bbd8a43e587d);
-/**
- * The class represents an unary constraint.
- * The constructor is not called directly, since it is created by the Problem.
- *
- * @author Takuto Yanagida
- * @version 2023-04-11
- */ class $cefcd65bf0a494eb$export$42d7bbd8a43e587d extends $e67c82024f87a841$export$aec1359a0a40a615 {
-    #vars = [
-        null
-    ];
-    // Called only from Problem.
-    constructor(r, v){
-        super(r);
-        this.#vars[0] = v;
+	 */ indexOf(x) {
+        return this.es.indexOf(x);
     }
     /**
-	 * {@inheritDoc}
-	 */ size() {
-        return 1;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ at(index) {
-        if (index === 0) return this.#vars[0];
-        throw new IndexOutOfBoundsException();
-    }
-    /**
-	 * {@inheritDoc}
-	 */ [Symbol.iterator]() {
-        return this.#vars[Symbol.iterator]();
-    }
-    /**
-	 * {@inheritDoc}
-	 */ has(v) {
-        return v === this.#vars[0];
-    }
-    /**
-	 * {@inheritDoc}
-	 */ indexOf(v) {
-        return v === this.#vars[0] ? 0 : -1;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ emptyVariableSize() {
-        return this.#vars[0].isEmpty() ? 1 : 0;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ isDefined() {
-        return !this.#vars[0].isEmpty();
-    }
-    /**
-	 * {@inheritDoc}
-	 */ isSatisfied() {
-        if (this.#vars[0].isEmpty()) return $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED;
-        return this.crispRelation().isSatisfied(this.#vars[0].value()) ? 1 : 0;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ satisfactionDegree() {
-        if (this.#vars[0].isEmpty()) return $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED;
-        return this.fuzzyRelation().satisfactionDegree(this.#vars[0].value());
-    }
-    /**
-	 * {@inheritDoc}
+	 * Collects the constraints connected via the associated variables.
+	 * @return An array of constraints.
 	 */ neighbors() {
         const cs = [];
-        for (const c1 of this.#vars[0])if (c1 !== this) cs.push(c1);
+        for (const x of this.es){
+            for (const c of x)if (c !== this) cs.push(c);
+        }
         return cs;
     }
     /**
-	 * {@inheritDoc}
-	 */ highestConsistencyDegree() {
-        const sd = this.satisfactionDegree();
-        if (sd !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return sd;
-        let cd = 0;
-        for (const val of this.#vars[0].domain()){
-            const s = this.fuzzyRelation().satisfactionDegree(val);
-            if (s > cd) cd = s;
-            if (cd === 1) break;
-        }
-        return cd;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ lowestConsistencyDegree() {
-        const sd = this.satisfactionDegree();
-        if (sd !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return sd;
-        let cd = 1;
-        for (const val of this.#vars[0].domain()){
-            const s = this.fuzzyRelation().satisfactionDegree(val);
-            if (s < cd) cd = s;
-            if (cd === 0) break;
-        }
-        return cd;
-    }
-}
-var $7e7c1b07812da051$exports = {};
-$parcel$export($7e7c1b07812da051$exports, "Constraint2", ()=>$7e7c1b07812da051$export$18305a9eb79647d6);
-/**
- * The class represents an binary constraint.
- * The constructor is not called directly, since it is created by the Problem.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $7e7c1b07812da051$export$18305a9eb79647d6 extends $e67c82024f87a841$export$aec1359a0a40a615 {
-    #vars = [
-        null,
-        null
-    ];
-    // Called only from Problem.
-    constructor(r, v1, v2){
-        super(r);
-        this.#vars[0] = v1;
-        this.#vars[1] = v2;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ size() {
-        return 2;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ at(index) {
-        if (index === 0) return this.#vars[0];
-        if (index === 1) return this.#vars[1];
-        throw new IndexOutOfBoundsException();
-    }
-    /**
-	 * {@inheritDoc}
+	 * Gets the iterator of the associated variables.
 	 */ [Symbol.iterator]() {
-        return this.#vars[Symbol.iterator]();
+        return this.es[Symbol.iterator]();
     }
+    // ----
     /**
-	 * {@inheritDoc}
-	 */ has(v) {
-        return this.#vars[0] === v || this.#vars[1] === v;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ indexOf(v) {
-        if (v === this.#vars[0]) return 0;
-        if (v === this.#vars[1]) return 1;
-        return -1;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ emptyVariableSize() {
-        let sum = 0;
-        if (this.#vars[0].isEmpty()) ++sum;
-        if (this.#vars[1].isEmpty()) ++sum;
-        return sum;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ isDefined() {
-        return !this.#vars[0].isEmpty() && !this.#vars[1].isEmpty();
-    }
-    /**
-	 * {@inheritDoc}
-	 */ isSatisfied() {
-        if (this.#vars[0].isEmpty() || this.#vars[1].isEmpty()) return $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED;
-        return this.crispRelation().isSatisfied(this.#vars[0].value(), this.#vars[1].value()) ? 1 : 0;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ satisfactionDegree() {
-        if (this.#vars[0].isEmpty() || this.#vars[1].isEmpty()) return $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED;
-        return this.fuzzyRelation().satisfactionDegree(this.#vars[0].value(), this.#vars[1].value());
-    }
-    /**
-	 * {@inheritDoc}
-	 */ neighbors() {
-        const cs = [];
-        for (const c1 of this.#vars[0])if (c1 !== this) cs.push(c1);
-        for (const c1 of this.#vars[1])if (c1 !== this) cs.push(c1);
-        return cs;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ highestConsistencyDegree() {
-        const sd = this.satisfactionDegree();
-        if (sd !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return sd;
-        let cd = 0;
-        const val1 = this.#vars[0].value();
-        const val2 = this.#vars[1].value();
-        const d1 = this.#vars[0].domain();
-        const d2 = this.#vars[1].domain();
-        if (this.#vars[0].isEmpty() && !this.#vars[1].isEmpty()) for (const val1 of d1){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2);
-            if (s > cd) cd = s;
-            if (cd === 1) break;
-        }
-        else if (!this.#vars[0].isEmpty() && this.#vars[1].isEmpty()) for (const val2 of d2){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2);
-            if (s > cd) cd = s;
-            if (cd === 1) break;
-        }
-        else {
-            for (const val1 of d1)for (const val2 of d2){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2);
-                if (s > cd) cd = s;
-                if (cd === 1) break;
-            }
-        }
-        return cd;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ lowestConsistencyDegree() {
-        const sd = this.satisfactionDegree();
-        if (sd !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return sd;
-        let cd = 1;
-        const val1 = this.#vars[0].value();
-        const val2 = this.#vars[1].value();
-        const d1 = this.#vars[0].domain();
-        const d2 = this.#vars[1].domain();
-        if (this.#vars[0].isEmpty() && !this.#vars[1].isEmpty()) for (const val1 of d1){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2);
-            if (s < cd) cd = s;
-            if (cd === 0) break;
-        }
-        else if (!this.#vars[0].isEmpty() && this.#vars[1].isEmpty()) for (const val2 of d2){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2);
-            if (s < cd) cd = s;
-            if (cd === 0) break;
-        }
-        else {
-            for (const val1 of d1)for (const val2 of d2){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2);
-                if (s < cd) cd = s;
-                if (cd === 0) break;
-            }
-        }
-        return cd;
+	 * Returns the relation between variables.
+	 * @return Relation.
+	 */ relation() {
+        return this.r;
     }
 }
-var $e15e0d8061a1d3e1$exports = {};
-$parcel$export($e15e0d8061a1d3e1$exports, "Constraint3", ()=>$e15e0d8061a1d3e1$export$7dc34a7e74bc57bb);
-/**
- * The class represents an 3-ary constraint.
- * The constructor is not called directly, since it is created by the Problem.
- *
- * @author Takuto Yanagida
- * @version 2023-04-11
- */ class $e15e0d8061a1d3e1$export$7dc34a7e74bc57bb extends $e67c82024f87a841$export$aec1359a0a40a615 {
-    #vars = [
-        null,
-        null,
-        null
-    ];
-    // Called only from Problem.
-    constructor(r, v1, v2, v3){
+// -----------------------------------------------------------------------------
+class Constraint1 extends Constraint {
+    constructor(r, x){
         super(r);
-        this.#vars[0] = v1;
-        this.#vars[1] = v2;
-        this.#vars[2] = v3;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ size() {
-        return 3;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ at(index) {
-        if (index === 0) return this.#vars[0];
-        if (index === 1) return this.#vars[1];
-        if (index === 2) return this.#vars[2];
-        throw new IndexOutOfBoundsException();
-    }
-    /**
-	 * {@inheritDoc}
-	 */ [Symbol.iterator]() {
-        return this.#vars[Symbol.iterator]();
-    }
-    /**
-	 * {@inheritDoc}
-	 */ has(v) {
-        return this.#vars[0] === v || this.#vars[1] === v || this.#vars[2] === v;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ indexOf(v) {
-        if (v === this.#vars[0]) return 0;
-        if (v === this.#vars[1]) return 1;
-        if (v === this.#vars[2]) return 2;
-        return -1;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ emptyVariableSize() {
-        let sum = 0;
-        if (this.#vars[0].isEmpty()) ++sum;
-        if (this.#vars[1].isEmpty()) ++sum;
-        if (this.#vars[2].isEmpty()) ++sum;
-        return sum;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ isDefined() {
-        return !this.#vars[0].isEmpty() && !this.#vars[1].isEmpty() && !this.#vars[2].isEmpty();
-    }
-    /**
-	 * {@inheritDoc}
-	 */ isSatisfied() {
-        if (this.#vars[0].isEmpty() || this.#vars[1].isEmpty() || this.#vars[2].isEmpty()) return -1;
-        return this.crispRelation().isSatisfied(this.#vars[0].value(), this.#vars[1].value(), this.#vars[2].value()) ? 1 : 0;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ satisfactionDegree() {
-        if (this.#vars[0].isEmpty() || this.#vars[1].isEmpty() || this.#vars[2].isEmpty()) return $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED;
-        return this.fuzzyRelation().satisfactionDegree(this.#vars[0].value(), this.#vars[1].value(), this.#vars[2].value());
-    }
-    /**
-	 * {@inheritDoc}
-	 */ neighbors() {
-        const cs = [];
-        for (const c1 of this.#vars[0])if (c1 !== this) cs.push(c1);
-        for (const c1 of this.#vars[1])if (c1 !== this) cs.push(c1);
-        for (const c1 of this.#vars[2])if (c1 !== this) cs.push(c1);
-        return cs;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ highestConsistencyDegree() {
-        const sd = this.satisfactionDegree();
-        if (sd !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return sd;
-        let cd = 1;
-        const val1 = this.#vars[0].value();
-        const val2 = this.#vars[1].value();
-        const val3 = this.#vars[2].value();
-        const d1 = this.#vars[0].domain();
-        const d2 = this.#vars[1].domain();
-        const d3 = this.#vars[2].domain();
-        if (this.#vars[0].isEmpty() && !this.#vars[1].isEmpty() && !this.#vars[2].isEmpty()) for (const val1 of d1){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-            if (s > cd) cd = s;
-            if (cd === 1) break;
-        }
-        else if (!this.#vars[0].isEmpty() && this.#vars[1].isEmpty() && !this.#vars[2].isEmpty()) for (const val2 of d2){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-            if (s > cd) cd = s;
-            if (cd === 1) break;
-        }
-        else if (!this.#vars[0].isEmpty() && !this.#vars[1].isEmpty() && this.#vars[2].isEmpty()) for (const val3 of d3){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-            if (s > cd) cd = s;
-            if (cd === 1) break;
-        }
-        else if (this.#vars[0].isEmpty() && this.#vars[1].isEmpty() && !this.#vars[2].isEmpty()) {
-            for (const val1 of d1)for (const val2 of d2){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-                if (s > cd) cd = s;
-                if (cd === 1) break;
-            }
-        } else if (this.#vars[0].isEmpty() && !this.#vars[1].isEmpty() && this.#vars[2].isEmpty()) {
-            for (const val1 of d1)for (const val3 of d3){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-                if (s > cd) cd = s;
-                if (cd === 1) break;
-            }
-        } else if (!this.#vars[0].isEmpty() && this.#vars[1].isEmpty() && this.#vars[2].isEmpty()) {
-            for (const val2 of d2)for (const val3 of d3){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-                if (s > cd) cd = s;
-                if (cd === 1) break;
-            }
-        } else for (const val1 of d1){
-            for (const val2 of d2)for (const val3 of d3){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-                if (s > cd) cd = s;
-                if (cd === 1) break;
-            }
-        }
-        return cd;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ lowestConsistencyDegree() {
-        const sd = this.satisfactionDegree();
-        if (sd !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return sd;
-        let cd = 1;
-        const val1 = this.#vars[0].value();
-        const val2 = this.#vars[1].value();
-        const val3 = this.#vars[2].value();
-        const d1 = this.#vars[0].domain();
-        const d2 = this.#vars[1].domain();
-        const d3 = this.#vars[2].domain();
-        if (this.#vars[0].isEmpty() && !this.#vars[1].isEmpty() && !this.#vars[2].isEmpty()) for (const val1 of d1){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-            if (s < cd) cd = s;
-            if (cd === 0) break;
-        }
-        else if (!this.#vars[0].isEmpty() && this.#vars[1].isEmpty() && !this.#vars[2].isEmpty()) for (const val2 of d2){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-            if (s < cd) cd = s;
-            if (cd === 0) break;
-        }
-        else if (!this.#vars[0].isEmpty() && !this.#vars[1].isEmpty() && this.#vars[2].isEmpty()) for (const val3 of d3){
-            const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-            if (s < cd) cd = s;
-            if (cd === 0) break;
-        }
-        else if (this.#vars[0].isEmpty() && this.#vars[1].isEmpty() && !this.#vars[2].isEmpty()) {
-            for (const val1 of d1)for (const val2 of d2){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-                if (s < cd) cd = s;
-                if (cd === 0) break;
-            }
-        } else if (this.#vars[0].isEmpty() && !this.#vars[1].isEmpty() && this.#vars[2].isEmpty()) {
-            for (const val1 of d1)for (const val3 of d3){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-                if (s < cd) cd = s;
-                if (cd === 0) break;
-            }
-        } else if (!this.#vars[0].isEmpty() && this.#vars[1].isEmpty() && this.#vars[2].isEmpty()) {
-            for (const val2 of d2)for (const val3 of d3){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-                if (s < cd) cd = s;
-                if (cd === 0) break;
-            }
-        } else for (const val1 of d1){
-            for (const val2 of d2)for (const val3 of d3){
-                const s = this.fuzzyRelation().satisfactionDegree(val1, val2, val3);
-                if (s < cd) cd = s;
-                if (cd === 0) break;
-            }
-        }
-        return cd;
-    }
-}
-var $f7435b989104b6d0$exports = {};
-$parcel$export($f7435b989104b6d0$exports, "ConstraintN", ()=>$f7435b989104b6d0$export$fd9d2e5591a15c9a);
-/**
- * The class represents an n-ary constraint.
- * The constructor is not called directly, since it is created by the Problem.
- *
- * @author Takuto Yanagida
- * @version 2023-04-11
- */ class $f7435b989104b6d0$export$fd9d2e5591a15c9a extends $e67c82024f87a841$export$aec1359a0a40a615 {
-    #vars;
-    #vals;
-    // Called only from Problem.
-    constructor(r, ...vs){
-        super(r);
-        this.#vars = [
-            ...vs
+        this.es = [
+            x
         ];
-        this.#vals = new Array(this.#vars.length);
     }
-    /**
-	 * {@inheritDoc}
-	 */ size() {
-        return this.#vars.length;
+    emptySize() {
+        return this.es[0].isEmpty() ? 1 : 0;
     }
-    /**
-	 * {@inheritDoc}
-	 */ at(index) {
-        return this.#vars[index];
+    isDefined() {
+        return !this.es[0].isEmpty();
     }
-    /**
-	 * {@inheritDoc}
-	 */ [Symbol.iterator]() {
-        return this.#vars[Symbol.iterator]();
+    status() {
+        if (this.es[0].isEmpty()) return -1; // UNDEFINED
+        return 1 === this.r(this.es[0].value()) ? 1 : 0;
     }
-    /**
-	 * {@inheritDoc}
-	 */ has(v) {
-        return this.#vars.includes(v);
+    degree() {
+        if (this.es[0].isEmpty()) return -1; // UNDEFINED
+        return this.r(this.es[0].value());
     }
-    /**
-	 * {@inheritDoc}
-	 */ indexOf(v) {
-        return this.#vars.indexOf(v);
+}
+// -----------------------------------------------------------------------------
+class Constraint2 extends Constraint {
+    constructor(r, x1, x2){
+        super(r);
+        this.es = [
+            x1,
+            x2
+        ];
     }
-    /**
-	 * {@inheritDoc}
-	 */ emptyVariableSize() {
-        let sum = 0;
-        for (const v of this.#vars)if (v.isEmpty()) ++sum;
-        return sum;
+    emptySize() {
+        let n = 0;
+        if (this.es[0].isEmpty()) ++n;
+        if (this.es[1].isEmpty()) ++n;
+        return n;
     }
-    /**
-	 * {@inheritDoc}
-	 */ isDefined() {
-        for (const v of this.#vars){
-            if (v.isEmpty()) return false;
+    isDefined() {
+        return !this.es[0].isEmpty() && !this.es[1].isEmpty();
+    }
+    status() {
+        if (this.es[0].isEmpty() || this.es[1].isEmpty()) return -1; // UNDEFINED
+        return 1 === this.r(this.es[0].value(), this.es[1].value()) ? 1 : 0;
+    }
+    degree() {
+        if (this.es[0].isEmpty() || this.es[1].isEmpty()) return -1; // UNDEFINED
+        return this.r(this.es[0].value(), this.es[1].value());
+    }
+}
+// -----------------------------------------------------------------------------
+class Constraint3 extends Constraint {
+    constructor(r, x1, x2, x3){
+        super(r);
+        this.es = [
+            x1,
+            x2,
+            x3
+        ];
+    }
+    emptySize() {
+        let n = 0;
+        if (this.es[0].isEmpty()) ++n;
+        if (this.es[1].isEmpty()) ++n;
+        if (this.es[2].isEmpty()) ++n;
+        return n;
+    }
+    isDefined() {
+        return !this.es[0].isEmpty() && !this.es[1].isEmpty() && !this.es[2].isEmpty();
+    }
+    status() {
+        if (this.es[0].isEmpty() || this.es[1].isEmpty() || this.es[2].isEmpty()) return -1; // UNDEFINED
+        return 1 === this.r(this.es[0].value(), this.es[1].value(), this.es[2].value()) ? 1 : 0;
+    }
+    degree() {
+        if (this.es[0].isEmpty() || this.es[1].isEmpty() || this.es[2].isEmpty()) return -1; // UNDEFINED
+        return this.r(this.es[0].value(), this.es[1].value(), this.es[2].value());
+    }
+}
+// -----------------------------------------------------------------------------
+class ConstraintN extends Constraint {
+    #vs;
+    constructor(r, ...xs){
+        super(r);
+        this.es = [
+            ...xs
+        ];
+        this.#vs = new Array(this.es.length);
+    }
+    emptySize() {
+        let n = 0;
+        for (const x of this.es)n += x.isEmpty() ? 1 : 0;
+        return n;
+    }
+    isDefined() {
+        for (const x of this.es){
+            if (x.isEmpty()) return false;
         }
         return true;
     }
-    /**
-	 * {@inheritDoc}
-	 */ isSatisfied() {
-        for(let i = 0; i < this.#vars.length; ++i){
-            if (this.#vars[i].isEmpty()) return -1;
-            this.#vals[i] = this.#vars[i].value();
+    status() {
+        for(let i = 0; i < this.es.length; ++i){
+            const x = this.es[i];
+            if (x.isEmpty()) return -1; // UNDEFINED
+            this.#vs[i] = x.value();
         }
-        return this.crispRelation().isSatisfied(...this.#vals) ? 1 : 0;
+        return 1 === this.r(...this.#vs) ? 1 : 0;
     }
-    /**
-	 * {@inheritDoc}
-	 */ satisfactionDegree() {
-        for(let i = 0; i < this.#vars.length; ++i){
-            const v = this.#vars[i];
-            if (v.isEmpty()) return $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED;
-            this.#vals[i] = v.value();
+    degree() {
+        for(let i = 0; i < this.es.length; ++i){
+            const x = this.es[i];
+            if (x.isEmpty()) return -1; // UNDEFINED
+            this.#vs[i] = x.value();
         }
-        return this.fuzzyRelation().satisfactionDegree(...this.#vals);
-    }
-    /**
-	 * {@inheritDoc}
-	 */ neighbors() {
-        const cs = [];
-        for (const v of this.#vars){
-            for (const c1 of v)if (c1 !== this) cs.push(c1);
-        }
-        return cs;
-    }
-    /**
-	 * {@inheritDoc}
-	 */ highestConsistencyDegree() {
-        const sd = this.satisfactionDegree();
-        if (sd !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return sd;
-        const emptyIndices = new Array(this.emptyVariableSize());
-        let c1 = 0;
-        for(let i = 0; i < this.#vars.length; ++i)if (this.#vars[i].isEmpty()) emptyIndices[c1++] = i;
-        else this.#vals[i] = this.#vars[i].value();
-        return this.checkHCD(emptyIndices, 0, 0);
-    }
-    /**
-	 * {@inheritDoc}
-	 */ lowestConsistencyDegree() {
-        const sd = this.satisfactionDegree();
-        if (sd !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return sd;
-        const emptyIndices = new Array(this.emptyVariableSize());
-        let c1 = 0;
-        for(let i = 0; i < this.#vars.length; ++i)if (this.#vars[i].isEmpty()) emptyIndices[c1++] = i;
-        else this.#vals[i] = this.#vars[i].value();
-        return this.checkLCD(emptyIndices, 0, 1);
-    }
-    checkHCD(emptyIndices, currentStep, cd) {
-        const index = emptyIndices[currentStep];
-        const d = this.#vars[index].domain();
-        if (currentStep === emptyIndices.length - 1) for (const val of d){
-            this.#vals[index] = val;
-            const s = this.fuzzyRelation().satisfactionDegree(this.#vals);
-            if (s > cd) cd = s;
-            if (cd === 1) break;
-        }
-        else for (const val of d){
-            this.#vals[index] = val;
-            cd = this.checkLCD(emptyIndices, currentStep + 1, cd);
-        }
-        return cd;
-    }
-    checkLCD(emptyIndices, currentStep, cd) {
-        const index = emptyIndices[currentStep];
-        const d = this.#vars[index].domain();
-        if (currentStep === emptyIndices.length - 1) for (const val of d){
-            this.#vals[index] = val;
-            const s = this.fuzzyRelation().satisfactionDegree(this.#vals);
-            if (s < cd) cd = s;
-            if (cd === 0) break;
-        }
-        else for (const val of d){
-            this.#vals[index] = val;
-            cd = this.checkLCD(emptyIndices, currentStep + 1, cd);
-        }
-        return cd;
+        return this.r(...this.#vs);
     }
 }
-class $1f9c7ae011a64571$export$559d26475d35ac1e {
-    #fv = (o, d)=>new $8a169d84b9853138$export$c867a5c9595a1350(o, d);
-    #fc = (r, vs)=>{
-        if (vs.length === 1) return new $cefcd65bf0a494eb$export$42d7bbd8a43e587d(r, ...vs);
-        if (vs.length === 2) return new $7e7c1b07812da051$export$18305a9eb79647d6(r, ...vs);
-        if (vs.length === 3) return new $e15e0d8061a1d3e1$export$7dc34a7e74bc57bb(r, ...vs);
-        return new $f7435b989104b6d0$export$fd9d2e5591a15c9a(r, vs);
-    };
-    _isFuzzy = false;
-    _vars = [];
-    _cons = [];
-    // Methods for Modifying Factories --------
-    /**
-	 * Sets a variable factory.
-	 */ setVariableFactory(fn) {
-        this.#fv = fn;
-    }
-    /**
-	 * Sets a variable factory.
-	 */ setConstraintFactory(fn) {
-        this.#fc = fn;
-    }
-    // Generation Methods --------
-    /**
-	 * Adds a variable to this problem.
-	 * @param Variable v A variable.
-	 */ addVariable(v) {
-        v.setIndex(this._vars.length);
-        this._vars.push(v);
-    }
-    /**
-	 * Generates a domain.
-	 * @param args {
-	 *   @type Array 'values' Multiple values.
-	 *
-	 *   @type Number 'min' Minimum value.
-	 *   @type Number 'max' Maximum value.
-	 * }
-	 * @return A domain.
-	 */ createDomain(args) {
-        if (args.values) return new $c390ec7dca5ac321$export$62fe53be9d2bcdd3(args.values);
-        else if ("min" in args && "max" in args) return new $aa858a2a93fead82$export$681548042801f21c(args.min, args.max);
-        return null;
-    }
-    /**
-	 * Generates a variable.
-	 * @param Array args {
-	 *   @type string 'name'   Display name.
-	 *   @type Domain 'domain' A domain.
-	 *   @type *      'value'  A value.
-	 * }
-	 * @return A variable.
-	 */ createVariable(args) {
-        if (args.value && !args.domain.contains(args.value)) throw new Error();
-        const v = this.#fv(this, args.domain);
-        this.addVariable(v);
-        if (args.name) v.setName(args.name);
-        if (args.value) v.assign(args.value);
-        return v;
-    }
-    /**
-	 * Generates a constraint.
-	 * @param Array args {
-	 *   @type string   'name'      Display name.
-	 *   @type Array    'variables' Variables.
-	 *   @type Relation 'relation'  A relation.
-	 * }
-	 * @return A constraint.
-	 */ createConstraint(args) {
-        for (const v of args.variables){
-            if (v.owner() !== this) return null;
-        }
-        const c1 = this.#fc(args.relation, args.variables);
-        c1.setIndex(this._cons.length);
-        this._cons.push(c1);
-        for (const v of args.variables)v.connect(c1);
-        if (c1.isFuzzy()) this._isFuzzy = true;
-        if (args.name) c1.setName(args.name);
-        return c1;
-    }
-    //  Modification Methods --------
-    /**
-	 * Remove the constraint.
-	 * @param c Constraints to be removed.
-	 */ removeConstraint(c1) {
-        const index = this._cons.indexOf(c1);
-        this._cons.remove(c1);
-        for(let i = index; i < this._cons.length; ++i)this._cons[i].setIndex(i);
-        for (const v of c1)v.disconnect(c1);
-        this._isFuzzy = false;
-        for (const c1 of this._cons)if (c1.isFuzzy()) {
-            this._isFuzzy = true;
-            break;
-        }
-    }
-    /**
-	 * Changes the status of all variables to unassigned.
-	 */ clearAllVariables() {
-        for (const v of this._vars)v.clear();
-    }
-    /**
-	 * Reverse the order of variables.
-	 * The index of each variable is reassigned.
-	 */ reverseVariables() {
-        this._vars.reverse();
-        for(let i = 0; i < this._vars.length; ++i)this._vars[i].setIndex(i);
-    }
-    /**
-	 * Sorts variables using a specified comparator.
-	 * The index of each variable is reassigned.
-	 * @param comparator A comparator.
-	 */ sortVariables(comparator) {
-        this._vars.sort(comparator);
-        for(let i = 0; i < this._vars.length; ++i)this._vars[i].setIndex(i);
-    }
-    // Methods for Variables --------
-    /**
-	 * Returns the number of variables in the problem.
-	 * @return Number of variables
-	 */ variableSize() {
-        return this._vars.length;
-    }
-    /**
-	 * Returns a variable by index.
-	 * @param index Index (0 <= index < getVariableSize()).
-	 * @return A variable
-	 */ variableAt(index) {
-        return this._vars[index];
-    }
-    /**
-	 * Returns a variable by name.
-	 * @param name Name.
-	 * @return A variable.
-	 */ variableOf(name) {
-        for (const v of this._vars){
-            if (v.name() === name) return v;
-        }
-        return null;
-    }
-    /**
-	 * Returns whether the variable is contained or not.
-	 * @param v A variable.
-	 * @return True if contained.
-	 */ hasVariable(v) {
-        return this._vars.includes(v);
-    }
-    /**
-	 * Returns the list of variables.
-	 * The returned list is not allowed to be modified.
-	 * @return The variable list.
-	 */ variables() {
-        return this._vars;
-    }
-    // Methods for Constraints --------
-    /**
-	 * Gets the number of constraints in the problem.
-	 * @return Number of constraints
-	 */ constraintSize() {
-        return this._cons.length;
-    }
-    /**
-	 * Returns a constraint with an index.
-	 * @param index Index (0 <= index < constraintSize()).
-	 * @return A constraint.
-	 */ constraintAt(index) {
-        return this._cons[index];
-    }
-    /**
-	 * Returns a constraint by name.
-	 * @param name Name.
-	 * @return A constraint.
-	 */ constraintOf(name) {
-        for (const c1 of this._cons){
-            if (c1.name() === name) return c1;
-        }
-        return null;
-    }
-    /**
-	 * Returns whether the constraint is contained or not.
-	 * @param c A constraint
-	 * @return True if contained.
-	 */ hasConstraint(c1) {
-        return this._cons.includes(c1);
-    }
-    /**
-	 * Returns the list of constraint.
-	 * The returned list is not allowed to be modified.
-	 * @return The constraint list.
-	 */ constraints() {
-        return this._cons;
-    }
-    /**
-	 * Gets the constraints that exist between the specified variables.
-	 * Returns an empty array if no constraints exist.
-	 * If there are multiple constraints between two variables (including the case of n-ary constraints (2 < n)), they will be included in the return array.
-	 * @param v1 Variable 1
-	 * @param v2 Variable 2
-	 * @return Constraints.
-	 */ constraintsBetween(v1, v2) {
-        const cs = [];
-        for (const c1 of v1)if (c1.has(v2)) cs.push(c1);
-        return cs;
-    }
-    /**
-	 * Finds the set of worst satisfiable constraints in a fuzzy constraint satisfaction problem.
-	 * @return Array of constraints and worst satisfaction degree.
-	 */ constraintsWithWorstSatisfactionDegree() {
-        const cs = [];
-        let cur = 1;
-        for (const c1 of this._cons){
-            const s = c1.satisfactionDegree();
-            if (s < cur) {
-                cur = s;
-                cs.length = 0;
-                cs.push(c1);
-            } else if (s - cur < Number.MIN_VALUE * 10) cs.push(c1);
-        }
-        return [
-            cs,
-            cur
-        ];
-    }
-    // State acquisition methods --------
-    /**
-	 * Returns the worst satisfaction degree for the constraints contained in the fuzzy constraint satisfaction problem.
-	 * If the degree cannot be determined because the variable has not yet been assigned a value or for some other reason, -1 is returned.
-	 * @return Worst satisfaction degree.
-	 */ worstSatisfactionDegree() {
-        let cs = 1;
-        for (const c1 of this._cons){
-            const s = c1.satisfactionDegree();
-            if (s === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) return $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED;
-            if (s < cs) cs = s;
-        }
-        return cs;
-    }
-    /**
-	 * Gets the average of satisfaction degrees of the fuzzy constraints.
-	 * @return Average of satisfaction degrees.
-	 */ averageSatisfactionDegree() {
-        let ave = 0;
-        for (const c1 of this._cons)ave += c1.satisfactionDegree();
-        ave = ave / this._cons.length;
-        return ave;
-    }
-    /**
-	 * Returns the number of variables in the problem that have not been assigned a value.
-	 * @return Number of variables with no value assigned.
-	 */ emptyVariableSize() {
-        let num = 0;
-        for (const v of this._vars)if (v.isEmpty()) num++;
-        return num;
-    }
-    /**
-	 * Gets the constraint density (number of constraints/number of variables).
-	 * @return Constraint density.
-	 */ constraintDensity() {
-        return this.constraintSize() / this.variableSize();
-    }
-    /**
-	 * Returns whether the constraint satisfaction problem has any variables with empty domain.
-	 * @return True if it exists.
-	 */ hasEmptyDomain() {
-        for (const v of this._vars){
-            if (v.domain().size() === 0) return true;
-        }
-        return false;
-    }
-    /**
-	 * Returns whether the problem is a fuzzy constraint satisfaction problem, i.e., whether it contains fuzzy constraints.
-	 * @return True if it is a fuzzy constraint satisfaction problem.
-	 */ isFuzzy() {
-        return this._isFuzzy;
-    }
-}
-var $c624e9db75d26c9f$exports = {};
-$parcel$export($c624e9db75d26c9f$exports, "CrispProblem", ()=>$c624e9db75d26c9f$export$2d7b2a6964dca148);
+
+},{"./element":"2JAfT","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dvfQo":[function(require,module,exports,__globalThis) {
 /**
- * The class represents a crisp constraint satisfaction problem.
+ * The class for solvers for finding solutions to CSPs.
  *
  * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $c624e9db75d26c9f$export$2d7b2a6964dca148 extends $1f9c7ae011a64571$export$559d26475d35ac1e {
+ * @version 2025-01-03
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Solver", ()=>Solver);
+var _monitor = require("./monitor");
+class Solver {
     /**
-	 * Generates a crisp constraint.
-	 * @param Array args {
-	 *   @type string   'name'      Display name.
-	 *   @type Array    'variables' Variables.
-	 *   @type Relation 'relation'  A relation.
-	 * }
-	 * @return A constraint.
-	 */ createConstraint(args) {
-        if (args.relation instanceof $971b718aea973f33$export$3b3c4a6f6988f9e8) throw new Error();
-        return super.createConstraint(args);
-    }
-    /**
-	 * Returns whether the problem is a fuzzy constraint satisfaction problem, i.e., whether it contains fuzzy constraints.
-	 * @return Always returns false.
-	 */ isFuzzy() {
-        return false;
-    }
-    /**
-	 * Returns the rate of constraints that are satisfied out of all constraints.
-	 * @return Rate of satisfied constraints.
-	 */ satisfiedConstraintRate() {
-        return this.satisfiedConstraintSize() / this._cons.length;
-    }
-    /**
-	 * Returns the number of satisfied constraints.
-	 * Undefined constraints are ignored.
-	 * @return Number of satisfied constraints.
-	 */ satisfiedConstraintSize() {
-        let count = 0;
-        for (const c1 of this._cons)if (c1.isSatisfied() === 1) ++count;
-        return count;
-    }
-    /**
-	 * Returns a list of violating constraints.
-	 * Undefined constraints are ignored.
-	 * @return Array of constraints.
-	 */ violatingConstraints() {
-        const cs = [];
-        for (const c1 of this._cons)if (c1.isSatisfied() === 0) cs.push(c1);
-        return cs;
-    }
-    /**
-	 * Returns the number of violating constraints.
-	 * Undefined constraints are ignored.
-	 * @return Number of violating constraints.
-	 */ violatingConstraintSize() {
-        let count = 0;
-        for (const c1 of this._cons)if (c1.isSatisfied() === 0) ++count;
-        return count;
-    }
-}
-var $b465f27e32fe405d$exports = {};
-$parcel$export($b465f27e32fe405d$exports, "ObservableVariable", ()=>$b465f27e32fe405d$export$a14c1bd8f74377e);
-/**
- * Class that represents an observable variable.
- *
- * @author Takuto Yanagida
- * @version 2023-04-18
- */ class $b465f27e32fe405d$export$a14c1bd8f74377e extends $8a169d84b9853138$export$c867a5c9595a1350 {
-    #observer;
-    // Called only from Problem.
-    constructor(owner, d, observer){
-        super(owner, d);
-        this.#observer = observer;
-    }
-    /**
-	 * Assign a value.
-	 * @param value Value.
-	 */ assign(value) {
-        super.assign(value);
-        if (this.#observer) this.#observer(this, value);
-    }
-}
-var $c141b9b955cfd62e$exports = {};
-$parcel$export($c141b9b955cfd62e$exports, "FuzzyTabledRelation", ()=>$c141b9b955cfd62e$export$9af92f8a5a1bfd9d);
-/**
- * This class represents fuzzy relationships by table.
- *
- * @author Takuto YANAGIDA
- * @version 2023-03-26
- */ class $c141b9b955cfd62e$export$9af92f8a5a1bfd9d extends $971b718aea973f33$export$3b3c4a6f6988f9e8 {
-    #elms;
-    #doms;
-    #mul;
-    constructor(elms, doms){
-        this.#elms = [
-            ...elms
-        ];
-        this.#doms = [
-            ...doms
-        ];
-        this.#mul = new Array(doms.length);
-        let m = 1;
-        for(let i = this.#mul.length - 1; i >= 0; --i){
-            this.#mul[i] = m;
-            m *= doms[i].size();
-        }
-    }
-    /**
-	 * Gets the satisfaction degree in this fuzzy relation.
-	 * @param vals Values of each variable
-	 * @return A satisfaction degree d (0 <= d <= 1).
-	 */ satisfactionDegree(...vals) {
-        if (this.#mul.length !== vals.length) throw new Exception();
-        let index = 0;
-        for(let i = 0; i < this.#mul.length; ++i)index += this.#mul[i] * this.#doms[i].indexOf(vals[i]);
-        return this.#elms[index];
-    }
-}
-var $8954958cf0b6696d$exports = {};
-$parcel$export($8954958cf0b6696d$exports, "FuzzyRelationFunction", ()=>$8954958cf0b6696d$export$292ff2b1fb710ade);
-/**
- * Fuzzy relations defined by functions.
- *
- * @author Takuto Yanagida
- * @version 2023-04-04
- */ class $8954958cf0b6696d$export$292ff2b1fb710ade extends $971b718aea973f33$export$3b3c4a6f6988f9e8 {
-    #fn;
-    constructor(fn){
-        super();
-        this.#fn = fn;
-    }
-    /**
-	 * Gets the satisfaction degree in this fuzzy relation.
-	 * @param vals Values of each variable
-	 * @return A satisfaction degree d (0 <= d <= 1).
-	 */ satisfactionDegree(...vals) {
-        return this.#fn(...vals);
-    }
-}
-var $9098286a4d3ce42f$exports = {};
-$parcel$export($9098286a4d3ce42f$exports, "CrispRelation", ()=>$9098286a4d3ce42f$export$182ea39d269dda05);
-/**
- * The class represents crisp relationships between variables.
- *
- * @author Takuto Yanagida
- * @version 2023-03-25
- */ class $9098286a4d3ce42f$export$182ea39d269dda05 extends $f4fccc65260d093d$export$b57c6722681faed7 {
-    /**
-	 * Gets whether or not the relation is satisfied in this crisp relation.
-	 * @param vals Values of each variable
-	 * @return Whether or not it is satisfied.
-	 */ isSatisfied(...vals) {
-        throw new Exception();
-    }
-    /**
-	 * Returns a view as a fuzzy relation.
-	 * @return A fuzzy relation.
-	 */ asFuzzyRelation() {
-        return new FuzzyRelationView(this);
-    }
-}
-var $f7617c3ac8e6cd4a$exports = {};
-$parcel$export($f7617c3ac8e6cd4a$exports, "CrispTabledRelation", ()=>$f7617c3ac8e6cd4a$export$14031e4758dfc3cf);
-/**
- * This class represents crisp relationships by table.
- *
- * @author Takuto YANAGIDA
- * @version 2023-03-26
- */ class $f7617c3ac8e6cd4a$export$14031e4758dfc3cf extends $9098286a4d3ce42f$export$182ea39d269dda05 {
-    #elms;
-    #doms;
-    #mul;
-    constructor(elms, doms){
-        this.#elms = [
-            ...elms
-        ];
-        this.#doms = [
-            ...doms
-        ];
-        this.#mul = new Array(doms.length);
-        let m = 1;
-        for(let i = this.#mul.length - 1; i >= 0; --i){
-            this.#mul[i] = m;
-            m *= doms[i].size();
-        }
-    }
-    /**
-	 * Gets whether or not the relation is satisfied in this crisp relation.
-	 * @param vals Values of each variable
-	 * @return Whether or not it is satisfied.
-	 */ isSatisfied(...vals) {
-        if (this.#mul.length !== vals.length) throw new Exception();
-        let index = 0;
-        for(let i = 0; i < this.#mul.length; ++i)index += this.#mul[i] * this.#doms[i].indexOf(vals[i]);
-        return this.#elms[index];
-    }
-}
-var $1772f50825805f1c$exports = {};
-$parcel$export($1772f50825805f1c$exports, "CrispRelationFunction", ()=>$1772f50825805f1c$export$a1cc6d3c2a0259e4);
-/**
- * Crisp relations defined by functions.
- *
- * @author Takuto Yanagida
- * @version 2023-04-04
- */ class $1772f50825805f1c$export$a1cc6d3c2a0259e4 extends $9098286a4d3ce42f$export$182ea39d269dda05 {
-    #fn;
-    constructor(fn){
-        super();
-        this.#fn = fn;
-    }
-    /**
-	 * Gets whether or not the relation is satisfied in this crisp relation.
-	 * @param vals Values of each variable
-	 * @return Whether or not it is satisfied.
-	 */ isSatisfied(...vals) {
-        return this.#fn(...vals);
-    }
-}
-var $388f571dc59ac25d$exports = {};
-$parcel$export($388f571dc59ac25d$exports, "CrispRelationView", ()=>$388f571dc59ac25d$export$f47c6ef1c1dceb7d);
-$parcel$export($388f571dc59ac25d$exports, "FuzzyRelationView", ()=>$388f571dc59ac25d$export$105e23542a0b280f);
-/**
- * View of relations.
- *
- * @author Takuto Yanagida
- * @version 2023-04-12
- */ class $388f571dc59ac25d$export$f47c6ef1c1dceb7d extends $9098286a4d3ce42f$export$182ea39d269dda05 {
-    constructor(that){
-        this.that = that;
-    }
-    isSatisfied(...vals) {
-        return this.that.satisfactionDegree(vals) === 1;
-    }
-}
-class $388f571dc59ac25d$export$105e23542a0b280f extends $971b718aea973f33$export$3b3c4a6f6988f9e8 {
-    constructor(that){
-        this.that = that;
-    }
-    satisfactionDegree(...vals) {
-        return this.that.isSatisfied(vals) ? 1 : 0;
-    }
-}
-var $e5625d8b51be59c8$exports = {};
-$parcel$export($e5625d8b51be59c8$exports, "Solver", ()=>$e5625d8b51be59c8$export$cca492cadf45c096);
-/**
- * The class for solvers for finding solutions to constraint satisfaction problems.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $e5625d8b51be59c8$export$cca492cadf45c096 {
-    _debug = true;
-    _debugOutput = (e)=>console.log(e);
-    /**
-	 * The crisp/fuzzy constraint satisfaction problem solved by the solver.
-	 */ _pro;
-    /**
-	 *  Limit number of iterations.
-	 */ _iterLimit = null;
-    /**
-	 * Time limit.
-	 */ _timeLimit = null;
-    /**
-	 * Target 'satisfied constraint rate' or 'constraint satisfaction degree'.
-	 */ _targetDeg = 0.8;
-    /**
-	 * Listeners of this solver.
-	 */ #listener = [];
-    /**
-	 * Generates a solver given a constraint satisfaction problem.
-	 * @param pro A constraint satisfaction problem.
-	 */ constructor(pro){
-        this._pro = pro;
-    }
+	 * Generates a solver.
+	 */ constructor(){}
     /**
 	 * Returns the name of the solver.
 	 * @return The name.
 	 */ name() {
-        return "";
+        return '';
     }
+    /**
+	 * Computes the solution to a CSP.
+	 * The specific meaning of the return value depends on the implementation of the algorithm.
+	 * @param p A CSP.
+	 * @param m Monitor.
+	 * @return True if the algorithm succeeds
+	 */ solve(p, m = new (0, _monitor.Monitor)()) {
+        this.pro = p;
+        this.monitor = m;
+        this.preprocess();
+        const ret = this.exec();
+        this.postprocess();
+        return ret;
+    }
+    /**
+	 * Placeholder for implementing preprocess.
+	 */ preprocess() {}
     /**
 	 * Placeholder for implementing an algorithm.
 	 * The solve method calls this method and returns the return value of this method.
@@ -3235,165 +2524,453 @@ $parcel$export($e5625d8b51be59c8$exports, "Solver", ()=>$e5625d8b51be59c8$export
         return false;
     }
     /**
+	 * Placeholder for implementing postprocess.
+	 */ postprocess() {}
+}
+
+},{"./monitor":"35O01","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"35O01":[function(require,module,exports,__globalThis) {
+/**
+ * The class for monitoring solvers.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-16
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Monitor", ()=>Monitor);
+class Monitor {
+    /**
+	 * Whether the debugging mode is on.
+	 */ #debugMode;
+    /**
+	 * Output function for debugging.
+	 */ #debugOutput;
+    /**
+	 * Listener of the solver.
+	 */ #listener;
+    /**
+	 *  Limit number of iterations.
+	 */ #iterLimit;
+    /**
+	 * Time limit.
+	 */ #timeLimit;
+    /**
+	 * Target 'ratio' or 'degree'.
+	 */ #target;
+    /**
+	 * Number of times the evaluation value is the same before stopping the solver.
+	 */ #sameEvLimit;
+    /**
+	 * End time.
+	 */ #endTime;
+    /**
+	 * Number of iterations.
+	 */ #iterCount;
+    /**
+	 * Last evaluation value.
+	 */ #lastEv;
+    /**
+	 * Number of times the evaluation value is the same.
+	 */ #sameEvCount;
+    // -------------------------------------------------------------------------
+    /**
+	 * Initializes the monitor.
+	 */ initialize() {
+        this.#endTime = null === this.#timeLimit ? Number.MAX_VALUE : Date.now() + this.#timeLimit;
+        this.#iterCount = 0;
+    }
+    /**
+	 * Checks the current status of the solver.
+	 * @param evaluation Evaluation value.
+	 * @returns True if the solver should stop, false if the solver should stop as a failure, and null if the solver should continue.
+	 */ check(evaluation = null) {
+        if (null !== evaluation && null !== this.#target && this.#target <= evaluation) {
+            this.outputDebugString('Stop: Current evaluation value is above the target');
+            return true;
+        }
+        if (this.#iterLimit < this.#iterCount++) {
+            this.outputDebugString('Stop: Number of iterations has reached the limit');
+            return false;
+        }
+        if (this.#endTime < Date.now()) {
+            this.outputDebugString('Stop: Time limit has been reached');
+            return false;
+        }
+        if (null !== evaluation && null !== this.#sameEvLimit) {
+            if (evaluation !== -1 && this.#lastEv === evaluation) {
+                if (this.#sameEvLimit < this.#sameEvCount++) {
+                    this.outputDebugString('Stop: Evaluation value has not changed for a certain number of times');
+                    return false;
+                }
+            } else {
+                this.#lastEv = evaluation;
+                this.#sameEvCount = 0;
+            }
+        }
+        return null;
+    }
+    /**
+	 * Called by the solver when a solution is found.
+	 * @param solution Solution.
+	 * @param evaluation Evaluation value.
+	 * @returns Whether to stop the solver.
+	 */ solutionFound(solution, evaluation) {
+        return this.#listener(solution, evaluation);
+    }
+    /**
+	 * Called by the solver to output debug strings.
+	 * @param str String to output.
+	 */ outputDebugString(str) {
+        if (this.#debugMode) this.#debugOutput(str);
+    }
+    /**
+	 * Called by the solver to check if the debugging mode is on.
+	 * @returns Whether the debugging mode is on.
+	 */ isDebugMode() {
+        return this.#debugMode;
+    }
+    /**
+	 * Called by the solver to check if the target is set.
+	 * @returns Whether the target is set.
+	 */ isTargetAssigned() {
+        return null !== this.#target;
+    }
+    /**
+	 * Called by the solver to check if the target is set.
+	 * @returns Whether the target is set.
+	 */ getTarget() {
+        return this.#target;
+    }
+    // -------------------------------------------------------------------------
+    /**
 	 * Sets and limits the maximum number of iterations for the solver's behavior.
 	 * After the specified number of iterations, the solver stops as a failure. The specific behavior depends on the solver.
 	 * @param count Maximum value; null means not set.
 	 */ setIterationLimit(count = null) {
-        this._iterLimit = count;
+        this.#iterLimit = null === count ? Number.MAX_SAFE_INTEGER : count;
     }
     /**
 	 * Sets a time limit on the solver's behavior.
 	 * If the specified time is exceeded, the solver stops as a failure. The specific behavior depends on the solver.
 	 * @param msec Time limit. null means not set.
 	 */ setTimeLimit(msec = null) {
-        this._timeLimit = msec;
+        this.#timeLimit = msec;
     }
     /**
 	 * The goal to be achieved, which is the condition for stopping the solver, is set as the constraint satisfaction degree (fuzzy) or the percentage of constraints satisfied (crisp).
 	 * The solver stops as success if the specified percentage is reached or exceeded. The specific behavior depends on the solver.
 	 * @param rate Degree or rate. null indicates not set.
-	 */ setTargetRate(rate = null) {
-        this._targetDeg = rate;
+	 */ setTarget(rate = null) {
+        this.#target = rate;
     }
     /**
-	 * Computes the solution to a constraint satisfaction problem.
-	 * The specific meaning of the return value depends on the implementation of the algorithm.
-	 * @return True if the algorithm succeeds
-	 */ solve() {
-        return this.exec();
+	 * Sets the number of times the evaluation value is the same before stopping the solver.
+	 * @param count Count; null means not set.
+	 */ setSameEvaluationLimit(count = null) {
+        this.#sameEvLimit = count;
     }
-    addListener(l) {
-        this.#listener.add(l);
-    }
-    removeListener(l) {
-        this.#listener.splice(this.#listener.indexOf(l), 1);
-    }
-    foundSolution(solution, worstDegree) {
-        let finish = false;
-        for (const l of this.#listener)if (l.foundSolution(solution, worstDegree)) finish = true;
-        return finish;
+    // -------------------------------------------------------------------------
+    /**
+	 * Sets the listener of the solver.
+	 * @param l Listener function.
+	 */ setListener(l) {
+        this.#listener = l;
     }
     // -------------------------------------------------------------------------
     /**
 	 * Sets whether to output debug strings.
 	 * @param boolean flag Do output if true.
 	 */ setDebugMode(flag) {
-        this._debug = flag;
+        this.#debugMode = flag;
     }
     /**
 	 * Sets a function that used for outputting debug strings.
 	 * @param function fn Function called when debug output.
 	 */ setDebugOutput(fn) {
-        this._debugOutput = fn;
+        this.#debugOutput = fn;
     }
-    _debugOutput(str) {
-        if (this._debug) this._debugOutput(str);
+    constructor(){
+        this.#debugMode = true;
+        this.#debugOutput = (e)=>console.log(e);
+        this.#listener = ()=>false;
+        this.#iterLimit = Number.MAX_SAFE_INTEGER;
+        this.#timeLimit = null;
+        this.#target = 0.8;
+        this.#sameEvLimit = null;
+        this.#endTime = 0;
+        this.#iterCount = 0;
+        this.#lastEv = -1;
+        this.#sameEvCount = 0;
     }
 }
-var $720d3cc47e3bd21f$exports = {};
-$parcel$export($720d3cc47e3bd21f$exports, "SolverFactory", ()=>$720d3cc47e3bd21f$export$4e442516b8f577ee);
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2juau":[function(require,module,exports,__globalThis) {
 /**
- * Solver factory class.
+ * A class that implements the flexible local changes method.
+ * The implementation is optimized by converting recursive calls to loops.
  *
  * @author Takuto Yanagida
- * @version 2023-04-17
- */ var $6537b0e1551710d4$exports = {};
-$parcel$export($6537b0e1551710d4$exports, "ForwardChecking", ()=>$6537b0e1551710d4$export$8570b7b487498488);
-/**
- * This class that implements the forward checking method.
- * The minimum-remaining-values (MRV) heuristic can also be used by specifying the option.
- * Searches for variable assignments that satisfy all constraints and fails if none are found.
- * Each variable must have its own domain because it hides domain elements as branch pruning.
- * Forward checking is also performed for problems with polynomial constraints.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ var $d7051a715721e7ce$exports = {};
-$parcel$export($d7051a715721e7ce$exports, "AssignmentList", ()=>$d7051a715721e7ce$export$1d4e454bcd46f18f);
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "FlexibleLocalChanges", ()=>FlexibleLocalChanges);
+var _assignmentList = require("../misc/assignment-list");
+var _consistency = require("../misc/consistency");
+var _solver = require("../solver");
+class FlexibleLocalChanges extends (0, _solver.Solver) {
+    #lt;
+    #lb;
+    #wsd;
+    #globalRet;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super();
+    }
+    /**
+	 * {@override}
+	 */ name() {
+        return 'Flexible Local Changes';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        [this.#lb, this.#lt] = (0, _consistency.consistencyDegreeOfProblem)(this.pro);
+        this.#wsd = this.pro.degree();
+        if (this.pro.emptySize() === 0) this.pro.clearAllVariables();
+        this.#globalRet = -1;
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const X1 = new Set();
+        const X2 = new Set(); // Currently assigned variables.
+        const X3 = new Set(); // Currently unassigned variables.
+        for (const x of this.pro.variables())(!x.isEmpty() ? X2 : X3).add(x);
+        const cr = new Set();
+        const initCons = this.#initTest(X2, cr);
+        let rc;
+        let initSol = null;
+        if (0 === X3.size) {
+            rc = initCons;
+            initSol = (0, _assignmentList.AssignmentList).fromVariables(X2);
+        } else rc = this.#lb;
+        const X3p = this.#choose(X2, cr).union(X3);
+        const X2p = X2.difference(X3p);
+        let result = this.#flcVariables(X1, X2p, X3p, this.#lt, this.#lt, rc);
+        if (result < rc) {
+            if (initSol !== null) initSol.apply();
+        }
+        result = this.pro.degree();
+        return this.#wsd < result && 0 < result && (this.#globalRet !== 0 || this.monitor.getTarget() === null);
+    }
+    #choose(x2, cr) {
+        const res = new Map();
+        for (const c of cr){
+            if (!c.isDefined()) continue;
+            for (const x of c)if (!res.has(x)) res.set(x, 1);
+            else res.set(x, (res.get(x) ?? 0) + 1);
+        }
+        const xs = [
+            ...x2
+        ];
+        xs.sort((o1, o2)=>{
+            let res1 = 0;
+            let res2 = 0;
+            if (res.has(o1)) res1 = res.get(o1) ?? 0;
+            if (res.has(o2)) res2 = res.get(o2) ?? 0;
+            if (res1 < res2) return 1;
+            if (res2 < res1) return -1;
+            return 0;
+        });
+        const ret = new Set();
+        for (const x of xs){
+            let remain = false;
+            for (const c of cr)if (c.isDefined()) {
+                remain = true;
+                break;
+            }
+            if (!remain) break;
+            x.clear();
+            ret.add(x);
+        }
+        return ret;
+    }
+    #flcVariables(X1, X2, X3, consX1, consX12, rc) {
+        X2 = new Set(X2); // Clone
+        X3 = new Set(X3); // Clone
+        while(true){
+            this.monitor.outputDebugString(`X1 ${X1.size}, X2' ${X2.size}, X3' ${X3.size}`);
+            const ret = this.monitor.check(this.pro.degree());
+            if (ret !== null) {
+                this.#globalRet = ret ? 1 : 0;
+                return consX12;
+            }
+            if (0 === X3.size) return consX12;
+            const xi = X3.values().next().value;
+            const consX12xi = this.#flcVariable(X1, X2, xi, consX1, consX12, rc);
+            if (this.#globalRet !== -1) return consX12;
+            if (consX12xi < rc) return this.#lb;
+            X2.add(xi);
+            X3.delete(xi);
+            consX12 = consX12xi;
+        }
+    }
+    #flcVariable(X1, X2, xi, consX1, consX12, rc) {
+        let bestCons = this.#lb;
+        if (xi.domain().size() === 0) return bestCons;
+        let bestX2 = (0, _assignmentList.AssignmentList).fromVariables(X2);
+        let bestDij = xi.domain().at(0);
+        const x2Store = (0, _assignmentList.AssignmentList).fromVariables(X2);
+        for(let j = 0; j < xi.domain().size() && bestCons < consX12; ++j){
+            const dij = xi.domain().at(j);
+            xi.assign(dij);
+            const consX1_xi = Math.min(consX1, this.#testX1(X1, xi, bestCons, rc));
+            if (Math.max(bestCons, rc) < consX1_xi) {
+                const crNew = new Set();
+                const consX12_xi = Math.min(Math.min(consX1_xi, consX12), this.#testX12(X1, X2, xi, consX1_xi, consX12, crNew));
+                if (bestCons < consX12_xi) {
+                    bestCons = consX12_xi;
+                    bestDij = dij;
+                    bestX2 = (0, _assignmentList.AssignmentList).fromVariables(X2);
+                }
+                if (crNew.size) {
+                    const repairCons = this.#flcRepair(X1, X2, xi, consX1_xi, consX12, crNew, Math.max(rc, bestCons));
+                    if (this.#globalRet !== -1) return bestCons;
+                    if (bestCons < repairCons) {
+                        bestCons = repairCons;
+                        bestDij = dij;
+                        bestX2 = (0, _assignmentList.AssignmentList).fromVariables(X2);
+                    }
+                    x2Store.apply();
+                }
+            }
+        }
+        bestX2.apply();
+        xi.assign(bestDij);
+        return bestCons;
+    }
+    #flcRepair(X1, X2, xi, consX1xi, consX12, cr, rc) {
+        const X3p = this.#choose(X2, cr);
+        const X1p = cloneAndAdd(X1, xi);
+        const X2p = X2.difference(X3p);
+        return this.#flcVariables(X1p, X2p, X3p, consX1xi, Math.min(consX12, consX1xi), rc);
+    }
+    #initTest(X, cr) {
+        const cs = new Set();
+        for (const x of X)for (const c of x)cs.add(c); // All variables in X have been assigned.
+        let ret = 1;
+        for (const c of cs){
+            const sd = c.degree();
+            if (sd < 0) continue;
+            if (sd < ret) ret = sd;
+        }
+        for (const c of this.pro.constraints()){
+            const cd = (0, _consistency.lowestConsistencyDegree)(c);
+            if (cd < this.#lt) cr.add(c);
+        }
+        return ret;
+    }
+    #testX1(X1, xi, bestCons, rc) {
+        let cd = 1;
+        const cs = new Set();
+        for (const x of X1){
+            const temp = this.pro.constraintsBetween(x, xi);
+            for (const c of temp)cs.add(c);
+        }
+        for (const c of cs){
+            const d = c.degree();
+            if (d < 0) continue;
+            if (d < cd) cd = d;
+            // If it is determined that a better solution than the current solution cannot be obtained
+            if (cd <= bestCons || cd <= rc) return cd;
+        }
+        return cd;
+    }
+    #testX12(X1, X2, xi, consX1xi, consX12, cr) {
+        let csd = 1;
+        const cs = new Set();
+        for (const x of X1){
+            const temp = this.pro.constraintsBetween(x, xi);
+            for (const c of temp)cs.add(c);
+        }
+        for (const x of X2){
+            const temp = this.pro.constraintsBetween(x, xi);
+            for (const c of temp)cs.add(c);
+        }
+        for (const c of cs){
+            const sd = c.degree();
+            if (sd < 0) continue;
+            if (sd < csd) csd = sd;
+        }
+        for (const c of cs){
+            const sd = c.degree();
+            if (sd < 0) continue;
+            if (sd < consX1xi || sd < consX12) cr.add(c);
+        }
+        return csd;
+    }
+}
+function cloneAndAdd(s, e) {
+    return new Set(s).add(e);
+}
+
+},{"../misc/assignment-list":"7XBf8","../misc/consistency":"knMRR","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7XBf8":[function(require,module,exports,__globalThis) {
 /**
  * The class represents multiple variables and their assignments.
  *
  * @author Takuto Yanagida
- * @version 2023-04-16
- */ var $9bc6df20db8be0bf$exports = {};
-$parcel$export($9bc6df20db8be0bf$exports, "Assignment", ()=>$9bc6df20db8be0bf$export$e6b39d88cc0d636);
-/**
- * The class represents a pair of variables and the values to be assigned to them.
- *
- * @author Takuto Yanagida
- * @version 2023-03-25
- */ class $9bc6df20db8be0bf$export$e6b39d88cc0d636 {
-    #variable;
-    #value;
-    constructor(args){
-        if (args.assignment) {
-            this.#variable = args.assignment.variable();
-            this.#value = args.assignment.value();
-        } else if (args.variable) {
-            this.#variable = args.variable;
-            this.#value = args.value ?? args.variable.value();
-        }
-    }
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "AssignmentList", ()=>AssignmentList);
+var _assignment = require("./assignment");
+var _random = require("./random");
+class AssignmentList {
     /**
-	 * Assigns a value to a stored variable.
-	 */ apply() {
-        this.#variable.assign(this.#value);
-    }
-    /**
-	 * Returns a string representation.
-	 * @return A string representation.
-	 */ toString() {
-        return `v${this.#variable.index()} <- ${this.#value}`;
-    }
-    /**
-	 * Gets the value.
-	 * @return Value.
-	 */ value() {
-        return this.#value;
-    }
-    /**
-	 * Gets the variable.
-	 * @return Variable.
-	 */ variable() {
-        return this.#variable;
-    }
-}
-class $d7051a715721e7ce$export$1d4e454bcd46f18f {
-    static fromVariables(vs) {
-        const al = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        al.setVariables(vs);
+	 * Creates an assignment list from variables.
+	 * @param xs Variables.
+	 * @return Assignment list.
+	 */ static fromVariables(xs) {
+        const al = new AssignmentList();
+        al.setVariables(xs);
         return al;
     }
-    #as = [];
-    constructor(){}
-    setProblem(problem) {
+    #as;
+    constructor(){
+        this.#as = [];
+    }
+    /**
+	 * Sets a problem.
+	 * @param p Problem.
+	 */ setProblem(p) {
         this.#as.length = 0;
-        for (const v of problem.variables())this.#as.push(new $9bc6df20db8be0bf$export$e6b39d88cc0d636({
-            variable: v,
-            value: v.value()
-        }));
+        for (const x of p.variables())this.#as.push(new (0, _assignment.Assignment)(x));
     }
-    setAssignmentList(al) {
+    /**
+	 * Sets assignments.
+	 * @param al Assignments.
+	 */ setAssignmentList(al) {
         this.#as.length = 0;
-        for (const a of al)this.#as.push(new $9bc6df20db8be0bf$export$e6b39d88cc0d636({
-            variable: a.variable(),
-            value: a.value()
-        }));
+        for (const a of al)this.#as.push(new (0, _assignment.Assignment)(a));
     }
-    setVariables(vs) {
+    /**
+	 * Sets variables.
+	 * @param xs Variables.
+	 */ setVariables(xs) {
         this.#as.length = 0;
-        for (const v of vs)this.#as.push(new $9bc6df20db8be0bf$export$e6b39d88cc0d636({
-            variable: v,
-            value: v.value()
-        }));
+        for (const x of xs)this.#as.push(new (0, _assignment.Assignment)(x));
     }
-    addVariable(variable, value = null) {
-        this.#as.push(new $9bc6df20db8be0bf$export$e6b39d88cc0d636({
-            variable: variable,
-            value: value
-        }));
+    /**
+	 * Adds a variable and its value.
+	 * @param x Variable.
+	 * @param value Value.
+	 */ addVariable(x, value = null) {
+        this.#as.push(new (0, _assignment.Assignment)(x, value));
     }
-    apply() {
+    /**
+	 * Applies all assignments.
+	 */ apply() {
         for (const a of this.#as)a.apply();
     }
     /**
@@ -3405,7 +2982,7 @@ class $d7051a715721e7ce$export$1d4e454bcd46f18f {
 	 * Checks whether the list is empty or not.
 	 * @return True if empty.
 	 */ isEmpty() {
-        return this.#as.length === 0;
+        return 0 === this.#as.length;
     }
     /**
 	 * Gets the number of assignments.
@@ -3413,7 +2990,10 @@ class $d7051a715721e7ce$export$1d4e454bcd46f18f {
 	 */ size() {
         return this.#as.length;
     }
-    differenceSize() {
+    /**
+	 * Gets the number of different assignments.
+	 * @return Number of different assignments.
+	 */ differenceSize() {
         let diff = 0;
         for (const a of this.#as)if (a.variable().value() !== a.value()) ++diff;
         return diff;
@@ -3435,1420 +3015,391 @@ class $d7051a715721e7ce$export$1d4e454bcd46f18f {
 	 *
 	 * @return An assignment.
 	 */ random() {
-        return this.#as[Math.floor(Math.random() * this.#as.length)];
+        return this.#as[(0, _random.rand)(this.#as.length)];
     }
 }
-var $f7b05997b0c3179b$exports = {};
-$parcel$export($f7b05997b0c3179b$exports, "DomainPruner", ()=>$f7b05997b0c3179b$export$f307752a90139b0e);
+
+},{"./assignment":"bZiv3","./random":"5CZO5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bZiv3":[function(require,module,exports,__globalThis) {
 /**
- * This class holds the branch pruning states for a domain.
+ * The class represents a pair of variables and the values to be assigned to them.
  *
  * @author Takuto Yanagida
- * @version 2023-03-25
- */ class $f7b05997b0c3179b$export$f307752a90139b0e {
-    static #UNHIDDEN = -1;
-    #hiddenLevels;
-    #hiddenSize = 0;
-    /**
-	 * Generates a class that holds branch pruning states for a domain.
-	 * @param size Size of the corresponding domain
-	 */ constructor(size){
-        this.#hiddenLevels = new Array(size);
-        this.#hiddenLevels.fill($f7b05997b0c3179b$export$f307752a90139b0e.#UNHIDDEN);
+ * @version 2025-01-18
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Assignment", ()=>Assignment);
+var _variable = require("../../problem/variable");
+class Assignment {
+    #x;
+    #v;
+    constructor(a_x, value = null){
+        if (a_x instanceof Assignment) {
+            this.#x = a_x.variable();
+            this.#v = a_x.value();
+        } else if (a_x instanceof (0, _variable.Variable)) {
+            this.#x = a_x;
+            this.#v = value ?? a_x.value();
+        } else throw new RangeError();
     }
     /**
-	 * Returns the size of the erased element.
-	 * @return Size of the erased element.
-	 */ hiddenSize() {
-        return this.#hiddenSize;
+	 * Assigns a value to a stored variable.
+	 */ apply() {
+        this.#x.assign(this.#v);
     }
     /**
-	 * Erases the element at the specified index.
-	 * @param index Index.
-	 * @param level Level.
-	 */ hide(index, level) {
-        if (this.#hiddenLevels[index] === $f7b05997b0c3179b$export$f307752a90139b0e.#UNHIDDEN) ++this.#hiddenSize;
-        this.#hiddenLevels[index] = level;
+	 * Returns a string representation.
+	 * @return A string representation.
+	 */ toString() {
+        return `v${this.#x.index()} <- ${this.#v}`;
     }
     /**
-	 * Returns whether the element is empty or not.
-	 * Returns true if all elements have been erased.
-	 * @return True if empty.
-	 */ isEmpty() {
-        return this.#hiddenLevels.length === this.#hiddenSize;
+	 * Gets the value.
+	 * @return Value.
+	 */ value() {
+        return this.#v;
     }
     /**
-	 * Returns whether or not the element at the specified index has been erased.
-	 * @param index Index.
-	 * @return True if erased.
-	 */ isValueHidden(index) {
-        return this.#hiddenLevels[index] !== $f7b05997b0c3179b$export$f307752a90139b0e.#UNHIDDEN;
-    }
-    /**
-	 * Restores the value that had been erased, by specifying a level.
-	 * @param level Level
-	 */ reveal(level) {
-        for(let i = 0; i < this.#hiddenLevels.length; ++i)if (this.#hiddenLevels[i] === level) {
-            this.#hiddenLevels[i] = $f7b05997b0c3179b$export$f307752a90139b0e.#UNHIDDEN;
-            --this.#hiddenSize;
-        }
-    }
-    /**
-	 * Restores all erased values.
-	 */ revealAll() {
-        this.#hiddenLevels.fill($f7b05997b0c3179b$export$f307752a90139b0e.#UNHIDDEN);
-        this.#hiddenSize = 0;
+	 * Gets the variable.
+	 * @return Variable.
+	 */ variable() {
+        return this.#x;
     }
 }
-class $6537b0e1551710d4$export$8570b7b487498488 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    #vars;
-    #sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-    #relCons;
-    #useMRV = false;
-    #iterCount;
-    #endTime;
-    /**
-	 * Generates a solver given a constraint satisfaction problem.
-	 * @param p A problem.
-	 */ constructor(p){
-        super(p);
-        this.#vars = [
-            ...this._pro.variables()
-        ];
-        for (const v of this.#vars)v.solverObject = new $f7b05997b0c3179b$export$f307752a90139b0e(v.domain().size());
-        this.#initializeRelatedConstraintTable();
-    }
-    name() {
-        return "Forward Checking";
-    }
-    // Initializes a table that caches constraints between two variables.
-    #initializeRelatedConstraintTable() {
-        const temp = [];
-        this.#relCons = [];
-        for(let j = 0; j < this.#vars.length; ++j){
-            this.#relCons.push(new Array(this.#vars.length));
-            for(let i = 0; i < this.#vars.length; ++i)if (i < j) this.#relCons[j][i] = this._pro.constraintsBetween(this.#vars[i], this.#vars[j]);
-        }
-    }
-    // Retrieves an array of constraints from a table that caches constraints between two variables.
-    #getConstraintsBetween(i, j) {
-        if (i < j) return this.#relCons[j][i];
-        return this.#relCons[i][j];
-    }
-    // Checks for possible assignment to a future variable from the current variable assignment.
-    #checkForward(level, currentIndex) {
-        for (const v_i of this.#vars){
-            if (!v_i.isEmpty()) continue; // If it is a past or present variable.
-            const d_i = v_i.domain();
-            const dc_i = v_i.solverObject;
-            const cs = this.#getConstraintsBetween(currentIndex, v_i.index());
-            for (const c1 of cs){
-                if (c1.emptyVariableSize() !== 1) continue;
-                for(let k = 0, n = d_i.size(); k < n; ++k){
-                    if (dc_i.isValueHidden(k)) continue;
-                    v_i.assign(d_i.at(k));
-                    if (c1.isSatisfied() === 0) dc_i.hide(k, level);
-                }
-                v_i.clear();
-                if (dc_i.isEmpty()) return false; // Failure if the domain of one of the future variables is empty.
-            }
-        }
-        return true;
-    }
-    // Returns the index of the smallest domain variable.
-    #indexOfVariableWithMRV() {
-        let index = 0;
-        let size = Number.MAX_VALUE;
-        for(let i = 0; i < this.#vars.length; ++i){
-            const v = this.#vars[i];
-            if (!v.isEmpty()) continue;
-            const d = v.domain();
-            const s = d.size() - v.solverObject.hiddenSize();
-            if (s < size) {
-                size = s;
-                index = i;
-            }
-        }
-        return index;
-    }
-    // Searches for one variable at a time.
-    #branch(level1) {
-        if (this._iterLimit && this._iterLimit < this.#iterCount++) {
-            this._debugOutput("stop: number of iterations has reached the limit");
-            return false;
-        }
-        if (this.#endTime < Date.now()) {
-            this._debugOutput("stop: time limit has been reached");
-            return false;
-        }
-        if (level1 === this._pro.variableSize()) {
-            this.#sol.setProblem(this._pro);
-            return true;
-        }
-        const vc_index = this.#useMRV ? this.#indexOfVariableWithMRV() : level1;
-        const vc = this.#vars[vc_index];
-        const d = vc.domain();
-        const dc = vc.solverObject;
-        for(let i = 0, n = d.size(); i < n; ++i){
-            if (dc.isValueHidden(i)) continue;
-            vc.assign(d.at(i));
-            if (this.#checkForward(level1, vc_index) && this.#branch(level1 + 1)) return true;
-            for (const v of this.#vars)v.solverObject.reveal(level1);
-        }
-        vc.clear();
-        return false;
-    }
-    // Do search.
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        this._pro.clearAllVariables();
-        const r = this.#branch(0);
-        for (const a of this.#sol){
-            a.apply();
-            a.variable().solverObject.revealAll();
-        }
-        return r;
-    }
-    /**
-	 * The settings made by this method are invalid.
-	 */ setTargetRate() {
-    // Do nothing.
-    }
-    /**
-	 * Specify whether to use the minimum-remaining-values (MRV) heuristic.
-	 * Use of MRV may increase processing time for some problems.
-	 * Default is false.
-	 * @param flag Use MRV if true.
-	 */ setUsingMinimumRemainingValuesHeuristics(flag) {
-        this.#useMRV = flag;
-    }
-}
-var $0c5cdff78dc8648d$exports = {};
-$parcel$export($0c5cdff78dc8648d$exports, "MaxForwardChecking", ()=>$0c5cdff78dc8648d$export$2a32484f7cb0d846);
+
+},{"../../problem/variable":"1Z7Sx","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5CZO5":[function(require,module,exports,__globalThis) {
 /**
- * This class that implements the forward checking method.
- * Find the solution to the problem as the maximum CSP.
- * Each variable must have its own domain because it hides domain elements as branch pruning.
+ * Utility functions for random numbers.
+ * @author Takuto Yanagida
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Set a seed number
+ * @param {number} seed Seed number
+ */ parcelHelpers.export(exports, "setSeed", ()=>setSeed);
+/**
+ * Return a random number from min to max
+ * @return {number} A random number
+ */ parcelHelpers.export(exports, "random", ()=>random);
+/**
+ * Returns a random number from 0 to n_min
+ * @param {number} n An integer
+ * @return {number} A random integer
+ */ parcelHelpers.export(exports, "rand", ()=>rand);
+let generator = Math.random;
+function setSeed(seed = Math.random() * 997) {
+    generator = createGenerator(seed);
+}
+function random() {
+    return generator();
+}
+function rand(n) {
+    console.log(generator === Math.random);
+    return Math.floor(generator() * n);
+}
+/**
+ * Create a function that returns a random number (Xorshift32) (used only in the library)
+ * @private
+ * @param {number} seed Seed number
+ * @return {function():number} Function that returns a random number
+ */ function createGenerator(seed) {
+    let y = seed;
+    return ()=>{
+        y = y ^ y << 13;
+        y = y ^ y >> 17;
+        y = y ^ y << 15;
+        return (y + 2147483648) / 4294967295;
+    };
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"knMRR":[function(require,module,exports,__globalThis) {
+/**
+ * Utilities for calculating consistency degree.
  *
  * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $0c5cdff78dc8648d$export$2a32484f7cb0d846 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    #vars;
-    #sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-    #maxVioCount;
-    #vioCount;
-    #checkedCons = new Set();
-    #cons = [];
-    #iterCount;
-    #endTime;
-    constructor(p){
-        super(p);
-        this.#vars = [
-            ...this._pro.variables()
-        ];
-        for (const v of this.#vars)v.solverObject = new $f7b05997b0c3179b$export$f307752a90139b0e(v.domain().size());
-        this.#maxVioCount = this._pro.constraintSize();
-    }
-    name() {
-        return "Forward Checking for Max CSPs";
-    }
-    #branch(level2, vioCount) {
-        if (this._iterLimit && this._iterLimit < this.#iterCount++) return false; // Failure if repeated a specified number.
-        if (this.#endTime < Date.now()) return false; // Failure if time limit is exceeded.
-        if (level2 === this._pro.variableSize()) {
-            const vcs = this._pro.violatingConstraintSize();
-            if (vcs < this.#maxVioCount) {
-                this.#maxVioCount = vcs;
-                this.#sol.setProblem(this._pro);
-                this._debugOutput(`   refreshed ${this.#maxVioCount}`);
-                if ((this._targetDeg ?? 1) <= this._pro.satisfiedConstraintRate()) return true;
-            }
-            return false;
-        }
-        const vc = this.#vars[level2];
-        const dom = vc.domain();
-        const dc = vc.solverObject;
-        for(let i = 0; i < dom.size(); ++i){
-            if (dc.isValueHidden(i)) continue;
-            vc.assign(dom.at(i));
-            this.#vioCount = vioCount + this.#getAdditionalViolationCount(level2, vc); // for max begin
-            if (this.#vioCount > this.#maxVioCount) continue; // for max end
-            if (this.#checkForward(level2) && this.#branch(level2 + 1, this.#vioCount)) return true;
-            for (const v of this.#vars)v.solverObject.reveal(level2);
-        }
-        vc.clear();
-        return false;
-    }
-    // Checks for possible assignment to a future variable from the current variable assignment.
-    #checkForward(level11) {
-        const vc = this.#vars[level11];
-        for(let i = level11 + 1; i < this.#vars.length; ++i){
-            const future = this.#vars[i];
-            this.#cons = this._pro.constraintsBetween(vc, future);
-            for (const c1 of this.#cons){
-                if (c1.emptyVariableSize() !== 1) continue;
-                if (this.#revise(future, c1, level11)) {
-                    if (future.solverObject.isEmpty()) return false; // Failure if the domain of one of the future variables is empty.
-                }
-            }
-        }
-        return true;
-    }
-    // Find the number of constraint violations that have increased due to the current value of the variable vc.
-    #getAdditionalViolationCount(level21, vc) {
-        let avc = 0;
-        this.#checkedCons.clear(); // Reuse.
-        for(let i = 0; i < level21; ++i){
-            this.#cons = this._pro.constraintsBetween(vc, this.#vars[i]);
-            for (const c1 of this.#cons){
-                if (this.#checkedCons.has(c1)) continue; // Because of the possibility of duplication in polynomial constraints
-                if (c1.isSatisfied() === 0) ++avc; // Neither satisfied nor undefined.
-                this.#checkedCons.add(c1);
-            }
-        }
-        return avc;
-    }
-    // Remove values from the domain of v1 that do not correspond to v2. That is, match v1 with v2.
-    #revise(v1, c1, level3) {
-        let deleted = false;
-        const dom = v1.domain();
-        const dc = v1.solverObject;
-        for(let i = 0; i < dom.size(); ++i){
-            if (dc.isValueHidden(i)) continue;
-            v1.assign(dom.at(i));
-            if (c1.isSatisfied() === 0 && this.#vioCount + 1 > this.#maxVioCount) {
-                dc.hide(i, level3);
-                deleted = true;
-            }
-        }
-        return deleted;
-    }
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        this._pro.clearAllVariables();
-        const r = this.#branch(0, 0);
-        if (r) this._debugOutput("stop: current degree is above the target");
-        else {
-            if (this._iterLimit && this._iterLimit < this.#iterCount) this._debugOutput("stop: number of iterations has reached the limit");
-            if (this.#endTime < Date.now()) this._debugOutput("stop: time limit has been reached");
-        }
-        for (const a of this.#sol){
-            a.apply();
-            a.variable().solverObject.revealAll();
-        }
-        return r;
-    }
-}
-var $18724c3268ec037c$exports = {};
-$parcel$export($18724c3268ec037c$exports, "LocalChanges", ()=>$18724c3268ec037c$export$8153937ab18ca581);
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
 /**
- * Class implements the local changes method.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $18724c3268ec037c$export$8153937ab18ca581 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    static #setPlusSet(s1, s2) {
-        const sn = new Set(s1);
-        for (const v of s2)sn.add(v);
-        return sn;
-    }
-    static #setMinusSet(s11, s21) {
-        const sn = new Set(s11);
-        for (const v of s21)sn.delete(v);
-        return sn;
-    }
-    static #setPlusElement(s, e) {
-        const sn = new Set(s);
-        sn.add(e);
-        return sn;
-    }
-    static #setMinusElement(s3, e1) {
-        const sn = new Set(s3);
-        sn.delete(e1);
-        return sn;
-    }
-    #iterCount;
-    #endTime;
-    #globalReturn;
-    constructor(p, unassignAll = false){
-        super(p);
-        if (unassignAll) this._pro.clearAllVariables();
-    }
-    name() {
-        return "Local Changes";
-    }
-    #createNewV3(V1_V2, v, val) {
-        const newV3 = new Set();
-        const cs = new Set();
-        for (const va of V1_V2){
-            const temp = this._pro.constraintsBetween(v, va);
-            for (const c1 of temp)cs.add(c1);
-        }
-        const origVal = v.value(); // Save the value.
-        v.assign(val);
-        for (const c1 of cs){
-            if (c1.isSatisfied() === 0) for (const vi of c1)newV3.add(vi);
-        }
-        v.assign(origVal); // Restore the value.
-        newV3.delete(v);
-        return newV3;
-    }
-    #isConsistent(A, v11, val1) {
-        const cs = new Set();
-        for (const va of A){
-            const temp = this._pro.constraintsBetween(v11, va);
-            for (const c1 of temp)cs.add(c1);
-        }
-        const origVal = v11.value(); // Save the value.
-        v11.assign(val1);
-        for (const c1 of cs)if (c1.isSatisfied() === 0) {
-            v11.assign(origVal); // Restore the value.
-            return false;
-        }
-        v11.assign(origVal); // Restore the value.
-        return true;
-    }
-    #lcValue(V1, V2, v2, val2) {
-        if (!this.#isConsistent(V1, v2, val2)) return false;
-        const V1_V2 = $18724c3268ec037c$export$8153937ab18ca581.#setPlusSet(V1, V2);
-        if (this.#isConsistent(V1_V2, v2, val2)) return true;
-        const V3 = this.#createNewV3(V1_V2, v2, val2);
-        const T = $18724c3268ec037c$export$8153937ab18ca581.#setMinusSet(V1_V2, V3);
-        if (!this.#isConsistent(T, v2, val2)) this._debugOutput("bug");
-        for (const vv of V3)vv.clear();
-        V1 = $18724c3268ec037c$export$8153937ab18ca581.#setPlusElement(V1, v2);
-        V2 = $18724c3268ec037c$export$8153937ab18ca581.#setMinusSet(V2, V3);
-        return this.#lcVariables(V1, V2, V3);
-    }
-    #lcVariable(V11, V21, v3, d) {
-        if (d.size === 0) return false;
-        const val = d.values().next().value;
-        const al = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(V21);
-        v3.assign(val);
-        const ret = this.#lcValue(V11, V21, v3, val);
-        if (ret || this.#globalReturn) return ret;
-        v3.clear();
-        al.apply();
-        return this.#lcVariable(V11, V21, v3, $18724c3268ec037c$export$8153937ab18ca581.#setMinusElement(d, val));
-    }
-    #lcVariables(V12, V22, V3) {
-        this._debugOutput(`V1 ${V12.size}, V2' ${V22.size}, V3' ${V3.size}`);
-        if ((this._targetDeg ?? 1) <= this._pro.satisfiedConstraintRate()) {
-            this._debugOutput("stop: current degree is above the target");
-            this.#globalReturn = true;
-            return true;
-        }
-        if (this._iterLimit && this._iterLimit < this.#iterCount++) {
-            this._debugOutput("stop: number of iterations has reached the limit");
-            this.#globalReturn = true;
-            return false;
-        }
-        if (this.#endTime < Date.now()) {
-            this._debugOutput("stop: time limit has been reached");
-            this.#globalReturn = true;
-            return false;
-        }
-        if (V3.size === 0) return true;
-        const v = V3.values().next().value;
-        const d = new Set();
-        for (const val of v.domain())d.add(val);
-        const ret = this.#lcVariable(V12, V22, v, d);
-        if (!ret || this.#globalReturn) return ret;
-        V22 = $18724c3268ec037c$export$8153937ab18ca581.#setPlusElement(V22, v);
-        V3 = $18724c3268ec037c$export$8153937ab18ca581.#setMinusElement(V3, v);
-        return this.#lcVariables(V12, V22, V3);
-    }
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        this.#globalReturn = false;
-        if (this._pro.emptyVariableSize() === 0) this._pro.clearAllVariables();
-        const notFixed = new Set();
-        const unassigned = new Set();
-        for (const v of this._pro.variables())(!v.isEmpty() ? notFixed : unassigned).add(v);
-        return this.#lcVariables(new Set(), notFixed, unassigned);
-    }
-}
-var $16be001e34914685$exports = {};
-$parcel$export($16be001e34914685$exports, "LocalChangesEx", ()=>$16be001e34914685$export$e577c7182ffc977b);
+ * Calculates the highest and lowest consistency degrees.
+ * @param p A problem.
+ * @return The pair of the highest and lowest consistency degrees.
+ */ parcelHelpers.export(exports, "consistencyDegreeOfProblem", ()=>consistencyDegreeOfProblem);
 /**
- * Class implements the local changes method.
- * The implementation is optimized by converting recursive calls to loops.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $16be001e34914685$export$e577c7182ffc977b extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    static #setPlusSet(s12, s22) {
-        const sn = new Set(s12);
-        for (const v of s22)sn.add(v);
-        return sn;
-    }
-    static #setMinusSet(s111, s211) {
-        const sn = new Set(s111);
-        for (const v of s211)sn.delete(v);
-        return sn;
-    }
-    static #setPlusElement(s4, e2) {
-        const sn = new Set(s4);
-        sn.add(e2);
-        return sn;
-    }
-    static #setMinusElement(s31, e11) {
-        const sn = new Set(s31);
-        sn.delete(e11);
-        return sn;
-    }
-    #iterCount;
-    #endTime;
-    #globalReturn;
-    constructor(p, unassignAll = false){
-        super(p);
-        if (unassignAll) this._pro.clearAllVariables();
-    }
-    name() {
-        return "Local Changes Ex";
-    }
-    #createNewV3(V1_V21, v4, val3) {
-        const newV3 = new Set();
-        const cs = new Set();
-        for (const va of V1_V21){
-            const temp = this._pro.constraintsBetween(v4, va);
-            for (const c1 of temp)cs.add(c1);
-        }
-        const origVal = v4.value(); // Save the value.
-        v4.assign(val3);
-        for (const c1 of cs){
-            if (c1.isSatisfied() === 0) for (const vi of c1)newV3.add(vi);
-        }
-        v4.assign(origVal); // Restore the value.
-        newV3.delete(v4);
-        return newV3;
-    }
-    #isConsistent(A1, v12, val11) {
-        const cs = new Set();
-        for (const va of A1){
-            const temp = this._pro.constraintsBetween(v12, va);
-            for (const c1 of temp)cs.add(c1);
-        }
-        const origVal = v12.value(); // Save the value.
-        v12.assign(val11);
-        for (const c1 of cs)if (c1.isSatisfied() === 0) {
-            v12.assign(origVal); // Restore the value.
-            return false;
-        }
-        v12.assign(origVal); // Restore the value.
-        return true;
-    }
-    #lcValue(V13, V23, v21) {
-        if (!this.#isConsistent(V13, v21, v21.value())) return false;
-        const V1_V2 = $16be001e34914685$export$e577c7182ffc977b.#setPlusSet(V13, V23);
-        if (this.#isConsistent(V1_V2, v21, v21.value())) return true;
-        const V3 = this.#createNewV3(V1_V2, v21, v21.value());
-        V23 = $16be001e34914685$export$e577c7182ffc977b.#setMinusSet(V23, V3);
-        V13 = $16be001e34914685$export$e577c7182ffc977b.#setPlusElement(V13, v21);
-        return this.#lcVariables(V13, V23, V3);
-    }
-    #lcVariable(V111, V211, v31) {
-        for (const val of v31.domain()){
-            const s = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(V211);
-            v31.assign(val);
-            const ret = this.#lcValue(V111, V211, v31);
-            if (ret || this.#globalReturn) return ret;
-            v31.clear();
-            s.apply();
-        }
-        return false;
-    }
-    #lcVariables(V121, V221, V31) {
-        V221 = new Set(V221); // Clone
-        V31 = new Set(V31); // Clone
-        while(true){
-            this._debugOutput(`V1 ${V121.size}, V2' ${V221.size}, V3' ${V31.size}`);
-            if ((this._targetDeg ?? 1) <= this._pro.satisfiedConstraintRate()) {
-                this._debugOutput("stop: current degree is above the target");
-                this.#globalReturn = true;
-                return true;
-            }
-            if (this._iterLimit && this._iterLimit < this.#iterCount++) {
-                this._debugOutput("stop: number of iterations has reached the limit");
-                this.#globalReturn = true;
-                return false;
-            }
-            if (this.#endTime < Date.now()) {
-                this._debugOutput("stop: time limit has been reached");
-                this.#globalReturn = true;
-                return false;
-            }
-            if (V31.size === 0) return true;
-            const v = V31.values().next().value;
-            const ret = this.#lcVariable(V121, V221, v);
-            if (!ret || this.#globalReturn) return ret;
-            V221.add(v);
-            V31.delete(v);
-        }
-    }
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        this.#globalReturn = false;
-        if (this._pro.emptyVariableSize() === 0) this._pro.clearAllVariables();
-        const notFixed = new Set();
-        const unassigned = new Set();
-        for (const v of this._pro.variables())(!v.isEmpty() ? notFixed : unassigned).add(v);
-        return this.#lcVariables(new Set(), notFixed, unassigned);
-    }
-}
-var $368b031b41e29330$exports = {};
-$parcel$export($368b031b41e29330$exports, "Breakout", ()=>$368b031b41e29330$export$44de86bc32e07644);
+ * Calculates the highest consistency degree.
+ * That is, it seeks the highest satisfaction degree of the possible combinations of variable assignments for a given constraint.
+ * When all associated variables have been assigned values, it returns the same value as degree().
+ * @param c A constraint.
+ * @return The highest consistency degree.
+ */ parcelHelpers.export(exports, "highestConsistencyDegree", ()=>highestConsistencyDegree);
 /**
- * Class implements a solver using the breakout method.
- * Solves a problem as a maximum CSP.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $368b031b41e29330$export$44de86bc32e07644 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    #weights;
-    #isRandom = true;
-    constructor(p){
-        super(p);
-        this.#weights = new Array(this._pro.constraintSize());
-        this.#weights.fill(1);
+ * Calculates the lowest consistency degree.
+ * That is, it seeks the lowest satisfaction degree of the possible combinations of variable assignments for a given constraint.
+ * When all associated variables have been assigned values, it returns the same value as degree().
+ * @param c A constraint.
+ * @return The lowest consistency degree.
+ */ parcelHelpers.export(exports, "lowestConsistencyDegree", ()=>lowestConsistencyDegree);
+function consistencyDegreeOfProblem(p) {
+    let L = 1;
+    let H = 0;
+    for (const c of p.constraints()){
+        const l = lowestConsistencyDegree(c);
+        const h = highestConsistencyDegree(c);
+        if (l < L) L = l;
+        if (H < h) H = h;
     }
-    name() {
-        return "Breakout";
-    }
-    #findCandidates(vioVars, canList) {
-        let maxDiff = 0;
-        for (const v of vioVars){
-            const v_val = v.value(); // Save the value
-            let nowVio = 0;
-            for (const c1 of v)nowVio += (1 - c1.isSatisfied()) * this.#weights[c1.index()];
-            out: for (const d of v.domain()){
-                if (v_val === d) continue;
-                v.assign(d);
-                let diff = nowVio;
-                for (const c1 of v){
-                    diff -= (1 - c1.isSatisfied()) * this.#weights[c1.index()];
-                    // If the improvement is less than the previous improvement, try the next variable.
-                    if (diff < maxDiff) continue out;
-                }
-                if (diff > maxDiff) {
-                    maxDiff = diff;
-                    canList.clear();
-                    canList.addVariable(v, d);
-                } else if (maxDiff !== 0) canList.addVariable(v, d);
-            }
-            v.assign(v_val); // Restore the value.
-        }
-    }
-    #listViolatingVariables(vioCons) {
-        const vvs = new Set();
-        for (const c1 of vioCons)for (const v of c1)vvs.add(v);
-        return Array.from(vvs);
-    }
-    exec() {
-        const endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        let iterCount = 0;
-        for (const v of this._pro.variables())if (v.isEmpty()) v.assign(v.domain().at(0));
-        const canList = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        while(true){
-            const vc = this._pro.violatingConstraints();
-            if ((this._targetDeg ?? 1) <= this._pro.satisfiedConstraintRate()) {
-                this._debugOutput("stop: current degree is above the target");
-                return true;
-            }
-            if (this._iterLimit && this._iterLimit < iterCount++) {
-                this._debugOutput("stop: number of iterations has reached the limit");
-                return false;
-            }
-            if (endTime < Date.now()) {
-                this._debugOutput("stop: time limit has been reached");
-                return false;
-            }
-            this._debugOutput(vc.length + " violations");
-            this.#findCandidates(this.#listViolatingVariables(vc), canList);
-            if (0 < canList.size()) {
-                const e = this.#isRandom ? canList.random() : canList.at(0);
-                e.apply();
-                canList.clear();
-                this._debugOutput("	" + e);
-            } else {
-                for (const c1 of vc)this.#weights[c1.index()] += 1;
-                this._debugOutput("breakout");
-            }
-        }
-    }
-    /**
-	 * Sets the randomness of the algorithm.
-	 * Enabling randomness reduces the risk of local solutions, but makes the solution unrepeatable.
-	 * @param flag Whether the randomness is enabled.
-	 */ setRandomness(flag) {
-        this.#isRandom = flag;
-    }
+    return [
+        L,
+        H
+    ];
 }
-var $59ba6be2773f89c9$exports = {};
-$parcel$export($59ba6be2773f89c9$exports, "GENET", ()=>$59ba6be2773f89c9$export$d94917317b4f74cb);
-/**
- * This class implements GENET.
- * CSP (but only Binary CSP) is supported.
- * Find the solution to the problem as the maximum CSP.
- *
- * @author Takuto Yanagida
- * @version 2023-04-17
- */ class $59ba6be2773f89c9$export$d94917317b4f74cb extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    static nextInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
-    }
-    #clusters = [];
-    #connections;
-    constructor(p){
-        super(p);
-    }
-    name() {
-        return "GENET";
-    }
-    #createNetwork() {
-        this._debugOutput("network creation start");
-        const cons = [];
-        for (const v of this._pro.variables()){
-            if (v.domain().size() === 0) return false;
-            this.#clusters.push(new $59ba6be2773f89c9$export$d94917317b4f74cb.Cluster(v));
-        }
-        for (const c1 of this._pro.constraints())if (c1.size() === 1) {
-            const v = c1.at(0);
-            const cl = this.#clusters[c1.at(0).index()];
-            for(let i = 0; i < cl.size(); ++i){
-                const origVal = v.value(); // Save the value.
-                v.assign(cl.get(i)._value);
-                if (c1.isSatisfied() === 0) cons.push(new $59ba6be2773f89c9$export$d94917317b4f74cb.Connection(cl.get(i)));
-                v.assign(origVal); // Restore the value.
-            }
-        } else {
-            const v1 = c1.at(0);
-            const v2 = c1.at(1);
-            const cl_f = this.#clusters[c1.at(0).index()];
-            const cl_s = this.#clusters[c1.at(1).index()];
-            for(let i = 0; i < cl_f.size(); ++i){
-                const origVal1 = v1.value(); // Save the value.
-                v1.assign(cl_f.get(i)._value);
-                for(let j = 0; j < cl_s.size(); ++j){
-                    const origVal2 = v2.value(); // Save the value.
-                    v2.assign(cl_s.get(j)._value);
-                    if (c1.isSatisfied() === 0) cons.push(new $59ba6be2773f89c9$export$d94917317b4f74cb.Connection(cl_f.get(i), cl_s.get(j)));
-                    v2.assign(origVal2); // Restore the value.
-                }
-                v1.assign(origVal1); // Restore the value.
-            }
-        }
-        for (const cl of this.#clusters)for (const n of cl._neurons)n.lockConnections();
-        this.#connections = cons;
-        this._debugOutput("network creation complete");
-        return true;
-    }
-    #shuffle(is) {
-        for(let i = is.length; i > 1; --i){
-            const j = $59ba6be2773f89c9$export$d94917317b4f74cb.nextInt(i);
-            const temp = is[i - 1];
-            is[i - 1] = is[j];
-            is[j] = temp;
-        }
-        return is;
-    }
-    exec() {
-        if (!this.#createNetwork()) throw new Exception();
-        const endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        let iterCount = 0;
-        const sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        const order = [];
-        for(let i = 0; i < this.#clusters.length; ++i)order.push(i);
-        let cur = this._pro.satisfiedConstraintRate();
-        let success = false;
-        while(true){
-            if (this._iterLimit && this._iterLimit < iterCount++) {
-                this._debugOutput("stop: number of iterations has reached the limit");
-                break;
-            }
-            if (endTime < Date.now()) {
-                this._debugOutput("stop: time limit has been reached");
-                break;
-            }
-            let modified = false;
-            for (const i of this.#shuffle(order))if (this.#clusters[i].setActivityMaximumInput()) modified = true; // Turn on the node with the largest input in each cluster
-            if (!modified) for (const con of this.#connections)con.refreshWeight(); // Update weights for all connections
-            else {
-                for (const clu of this.#clusters)clu.applyToVariable(); // Apply to variable
-                const d = this._pro.satisfiedConstraintRate();
-                if (cur < d) {
-                    cur = d;
-                    this._debugOutput(`satisfied constraint rate: ${d}`);
-                    sol.setProblem(this._pro);
-                    if (this.foundSolution(sol, d)) {
-                        success = true;
-                        break;
-                    }
-                    if (this._targetDeg ?? 1 <= cur) {
-                        this._debugOutput("stop: current degree is above the target");
-                        success = true;
-                        break;
-                    }
-                }
-            }
-        }
-        sol.apply(); // Despite the failures, the best assignment so far is applied for now.
-        return success;
-    }
+function highestConsistencyDegree(c) {
+    const s = c.size();
+    if (1 === s) return highestConsistencyDegree1(c);
+    if (2 === s) return highestConsistencyDegree2(c);
+    if (3 === s) return highestConsistencyDegree3(c);
+    return highestConsistencyDegreeN(c);
 }
-(()=>{
-    class Cluster {
-        static nextInt(max) {
-            return Math.floor(Math.random() * Math.floor(max));
-        }
-        #v;
-        #index;
-        #maxNeurons = [];
-        _neurons = [];
-        constructor(v){
-            this.#v = v;
-            for (const val of v.domain())this._neurons.push(new Neuron(val));
-            this.#setActivity(Cluster.nextInt(this._neurons.length));
-        }
-        #setActivity(index) {
-            for (const n of this._neurons)n._isActive = false;
-            this._neurons[index]._isActive = true;
-            this.#index = index;
-        }
-        applyToVariable() {
-            this.#v.assign(this._neurons[this.#index]._value);
-        }
-        get(index) {
-            return this._neurons[index];
-        }
-        neurons() {
-            return this._neurons;
-        }
-        // Turn on the node with the largest input.
-        setActivityMaximumInput() {
-            this.#maxNeurons.length = 0;
-            let max = Number.NEGATIVE_INFINITY;
-            let alreadyOn = false;
-            for(let i = 0; i < this._neurons.length; ++i){
-                const input = this._neurons[i].getInput();
-                if (max <= input) {
-                    if (max < input) {
-                        max = input;
-                        this.#maxNeurons.length = 0;
-                        alreadyOn = false;
-                    }
-                    this.#maxNeurons.push(i);
-                    if (this.#index === i) alreadyOn = true;
-                }
-            }
-            if (alreadyOn || this.#maxNeurons.length === 0) return false;
-            this.#setActivity(this.#maxNeurons[Cluster.nextInt(this.#maxNeurons.length)]);
-            return true;
-        }
-        size() {
-            return this._neurons.length;
-        }
-    }
-    $59ba6be2773f89c9$export$d94917317b4f74cb.Cluster = Cluster;
-    class Connection {
-        #first;
-        #second;
-        _weight;
-        // Order of neurons must be the same as the order of variables that the constraint has.
-        constructor(first, second = null){
-            this._weight = -1;
-            this.#first = first;
-            this.#first.addConnection(this);
-            this.#second = second;
-            if (this.#second !== null) this.#second.addConnection(this);
-        }
-        getNeuron(self) {
-            if (self === this.#first) return this.#second;
-            if (self === this.#second) return this.#first;
-            return null;
-        }
-        refreshWeight() {
-            if (!this.#first._isActive || this.#second !== null && !this.#second._isActive) return;
-            this._weight += -1;
-        }
-    }
-    $59ba6be2773f89c9$export$d94917317b4f74cb.Connection = Connection;
-    class Neuron {
-        #conTemp = [];
-        #connections;
-        _value;
-        _isActive = false;
-        constructor(value){
-            this._value = value;
-        }
-        addConnection(c1) {
-            this.#conTemp.push(c1);
-        }
-        lockConnections() {
-            this.#connections = [
-                ...this.#conTemp
-            ];
-            this.#conTemp = null; // No longer being used.
-        }
-        getInput() {
-            let ret = 0;
-            for (const c1 of this.#connections){
-                const n = c1.getNeuron(this); // If n is null, then the unary constraint.
-                ret += c1._weight * (n === null || n._isActive ? 1 : 0);
-            }
-            return ret;
-        }
-    }
-    $59ba6be2773f89c9$export$d94917317b4f74cb.Neuron = Neuron;
-})();
-var $6a494cae60277c44$exports = {};
-$parcel$export($6a494cae60277c44$exports, "CrispSRS3", ()=>$6a494cae60277c44$export$193930056f923a8);
-/**
- * This class implements the SRS algorithm for crisp CSP.
- * The given crisp CSP is treated as the maximum CSP.
- * Similar to SRS 3, the repair algorithm searches for an assignment that satisfies itself without reducing the number of satisfactions of its neighbors.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $6a494cae60277c44$export$193930056f923a8 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    #closedList = new Set();
-    #openList = new Set();
-    #nodes = [];
-    #neighborConstraints = [];
-    #isRandom = true;
-    constructor(p){
-        super(p);
-        for (const c1 of this._pro.constraints()){
-            this.#nodes.push(new $6a494cae60277c44$export$193930056f923a8.TreeNode(c1));
-            this.#neighborConstraints.push(null);
-        }
-    }
-    name() {
-        return "SRS 3 for Crisp CSPs";
-    }
-    #getNeighborConstraints(c2) {
-        const index = c2.index();
-        if (this.#neighborConstraints[index] === null) this.#neighborConstraints[index] = c2.neighbors();
-        return this.#neighborConstraints[index];
-    }
-    #repair(c0) {
-        this._debugOutput("repair");
-        const canList = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        let maxDiff = 0;
-        for (const v of c0){
-            const v_val = v.value(); // Save the value
-            let nowVio = 0;
-            for (const c1 of v)nowVio += 1 - c1.isSatisfied();
-            out: for (const d of v.domain()){
-                if (v_val === d) continue;
-                v.assign(d);
-                if (c0.isSatisfied() !== 1) continue; // Assuming c0 improvement
-                let diff = nowVio;
-                for (const n of v){
-                    diff -= 1 - n.isSatisfied();
-                    if (diff < maxDiff) continue out; // If the improvement is less than the previous improvement, try the next variable.
-                }
-                if (diff > maxDiff) {
-                    maxDiff = diff;
-                    canList.clear();
-                    canList.addVariable(v, d);
-                } else if (maxDiff !== 0) canList.addVariable(v, d);
-            }
-            v.assign(v_val); // Restore the value
-        }
-        if (canList.size() > 0) {
-            const e = this.#isRandom ? canList.random() : canList.at(0);
-            e.apply();
-            this._debugOutput("	" + e);
-            return true;
-        }
-        return false;
-    }
-    #shrink(node, c_stars) {
-        const temp = [];
-        let cur = node;
-        while(true){
-            cur = cur.parent();
-            temp.length = 0;
-            cur.getDescendants(temp);
-            cur.clear();
-            for (const n of c_stars){
-                this.#openList.delete(n);
-                this.#closedList.delete(n);
-            }
-            if (c_stars.delete(cur)) break;
-            this.#openList.add(cur);
-            if (cur.parent() !== null && !this.#repair(cur.parent().getObject())) break;
-        }
-    }
-    #spread(node1) {
-        this._debugOutput("spread");
-        this.#closedList.add(node1);
-        for (const c1 of this.#getNeighborConstraints(node1.getObject())){
-            const tnc = this.#nodes[c1.index()];
-            if (!this.#closedList.has(tnc) && !this.#openList.has(tnc)) {
-                tnc.clear(); // Because of its reuse, it may have had children when it was used before.
-                node1.add(tnc);
-                this.#openList.add(tnc);
-            }
-        }
-    }
-    #srs(c_stars1) {
-        this._debugOutput("srs");
-        const endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        let iterCount = 0;
-        this.#closedList.clear();
-        this.#openList.clear();
-        for (const n of c_stars1)this.#openList.add(n);
-        while(c_stars1.size && this.#openList.size){
-            if ((this._targetDeg ?? 1) <= this._pro.satisfiedConstraintRate()) {
-                this._debugOutput("stop: current degree is above the target");
-                return true;
-            }
-            if (this._iterLimit && this._iterLimit < iterCount++) {
-                this._debugOutput("stop: number of iterations has reached the limit");
-                return false;
-            }
-            if (endTime < Date.now()) {
-                this._debugOutput("stop: time limit has been reached");
-                return false;
-            }
-            const node = this.#openList.values().next().value;
-            this.#openList.delete(node);
-            if (this.#repair(node.getObject())) {
-                if (!c_stars1.delete(node)) {
-                    if (node.parent() !== null && this.#repair(node.parent().getObject())) this.#shrink(node, c_stars1);
-                    else this.#spread(node);
-                }
-            } else this.#spread(node);
-        }
-        return false;
-    }
-    exec() {
-        const vcs = this._pro.violatingConstraints();
-        const c_stars = new Set();
-        for (const c1 of vcs){
-            const tnc = this.#nodes[c1.index()];
-            c_stars.add(tnc);
-        }
-        if (this.#srs(c_stars)) return true;
-        return c_stars.length === 0;
-    }
-    /**
-	 * Sets the randomness of the algorithm.
-	 * Enabling randomness reduces the risk of falling into a local solution, but makes the solution unrepeatable.
-	 * @param flag If true, randomness is enabled.
-	 */ setRandomness(flag) {
-        this.#isRandom = flag;
-    }
+function lowestConsistencyDegree(c) {
+    const s = c.size();
+    if (1 === s) return lowestConsistencyDegree1(c);
+    if (2 === s) return lowestConsistencyDegree2(c);
+    if (3 === s) return lowestConsistencyDegree3(c);
+    return lowestConsistencyDegreeN(c);
 }
-{
-    class TreeNode {
-        #children = [];
-        #parent;
-        #obj;
-        constructor(obj){
-            this.#obj = obj;
-        }
-        add(tn) {
-            tn.#parent = this;
-            this.#children.push(tn);
-        }
-        clear() {
-            for (const tn of this.#children)tn.#parent = null;
-            this.#children.length = 0;
-        }
-        getDescendants(tns) {
-            tns.push(this);
-            for (const tn of this.#children)tn.getDescendants(tns);
-        }
-        getObject() {
-            return this.#obj;
-        }
-        parent() {
-            return this.#parent;
+/**
+ * Calculates the highest consistency degree of a unary constraint.
+ * @param c A constraint.
+ * @return The highest consistency degree.
+ */ function highestConsistencyDegree1(c) {
+    const ev = c.degree();
+    if (0 <= ev) return ev;
+    const x = c.at(0);
+    let cd = 0;
+    for (const v of x.domain()){
+        const ev = c.relation()(v);
+        if (cd < ev) cd = ev;
+        if (1 === cd) return 1;
+    }
+    return cd;
+}
+/**
+ * Calculates the lowest consistency degree of a unary constraint.
+ * @param c A constraint.
+ * @return The lowest consistency degree.
+ */ function lowestConsistencyDegree1(c) {
+    const ev = c.degree();
+    if (0 <= ev) return ev;
+    const x = c.at(0);
+    let cd = 1;
+    for (const v of x.domain()){
+        const ev = c.relation()(v);
+        if (ev < cd) cd = ev;
+        if (0 === cd) return 0;
+    }
+    return cd;
+}
+/**
+ * Calculates the highest consistency degree of a binary constraint.
+ * @param c A constraint.
+ * @return The highest consistency degree.
+ */ function highestConsistencyDegree2(c) {
+    const ev = c.degree();
+    if (0 <= ev) return ev;
+    const x0 = c.at(0);
+    const x1 = c.at(1);
+    const d0 = x0.isEmpty() ? x0.domain() : [
+        x0.value()
+    ];
+    const d1 = x1.isEmpty() ? x1.domain() : [
+        x1.value()
+    ];
+    let cd = 0;
+    for (const v0 of d0)for (const v1 of d1){
+        const ev = c.relation()(v0, v1);
+        if (cd < ev) cd = ev;
+        if (1 === cd) return 1;
+    }
+    return cd;
+}
+/**
+ * Calculates the lowest consistency degree of a binary constraint.
+ * @param c A constraint.
+ * @return The lowest consistency degree.
+ */ function lowestConsistencyDegree2(c) {
+    const ev = c.degree();
+    if (0 <= ev) return ev;
+    const x0 = c.at(0);
+    const x1 = c.at(1);
+    const d0 = x0.isEmpty() ? x0.domain() : [
+        x0.value()
+    ];
+    const d1 = x1.isEmpty() ? x1.domain() : [
+        x1.value()
+    ];
+    let cd = 1;
+    for (const v0 of d0)for (const v1 of d1){
+        const ev = c.relation()(v0, v1);
+        if (ev < cd) cd = ev;
+        if (0 === cd) return 0;
+    }
+    return cd;
+}
+/**
+ * Calculates the highest consistency degree of a trinary constraint.
+ * @param c A constraint.
+ * @return The highest consistency degree.
+ */ function highestConsistencyDegree3(c) {
+    const ev = c.degree();
+    if (0 <= ev) return ev;
+    const x0 = c.at(0);
+    const x1 = c.at(1);
+    const x2 = c.at(2);
+    const d0 = x0.isEmpty() ? x0.domain() : [
+        x0.value()
+    ];
+    const d1 = x1.isEmpty() ? x1.domain() : [
+        x1.value()
+    ];
+    const d2 = x2.isEmpty() ? x2.domain() : [
+        x2.value()
+    ];
+    let cd = 0;
+    for (const v0 of d0){
+        for (const v1 of d1)for (const v2 of d2){
+            const ev = c.relation()(v0, v1, v2);
+            if (cd < ev) cd = ev;
+            if (1 === cd) return 1;
         }
     }
-    $6a494cae60277c44$export$193930056f923a8.TreeNode = TreeNode;
-}var $8d126dc1fb260d00$exports = {};
-$parcel$export($8d126dc1fb260d00$exports, "FuzzyForwardChecking", ()=>$8d126dc1fb260d00$export$2d94cf9ddb103458);
+    return cd;
+}
 /**
- * This class implements the forward checking method for fuzzy CSP.
+ * Calculates the lowest consistency degree of a trinary constraint.
+ * @param c A constraint.
+ * @return The lowest consistency degree.
+ */ function lowestConsistencyDegree3(c) {
+    const ev = c.degree();
+    if (0 <= ev) return ev;
+    const x0 = c.at(0);
+    const x1 = c.at(1);
+    const x2 = c.at(2);
+    const d0 = x0.isEmpty() ? x0.domain() : [
+        x0.value()
+    ];
+    const d1 = x1.isEmpty() ? x1.domain() : [
+        x1.value()
+    ];
+    const d2 = x2.isEmpty() ? x2.domain() : [
+        x2.value()
+    ];
+    let cd = 1;
+    for (const v0 of d0){
+        for (const v1 of d1)for (const v2 of d2){
+            const ev = c.relation()(v0, v1, v2);
+            if (ev < cd) cd = ev;
+            if (0 === cd) return 0;
+        }
+    }
+    return cd;
+}
+/**
+ * Calculates the highest consistency degree of a N-ary constraint.
+ * @param c A constraint.
+ * @return The highest consistency degree.
+ */ function highestConsistencyDegreeN(c) {
+    const ev = c.degree();
+    if (0 <= ev) return ev;
+    const emptyIndices = new Array(c.emptySize());
+    let j = 0;
+    const vs = new Array(c.size());
+    for(let i = 0, I = c.size(); i < I; ++i){
+        const x = c.at(i);
+        if (x.isEmpty()) emptyIndices[j++] = i;
+        else vs[i] = x.value();
+    }
+    return checkHCD(c, vs, emptyIndices, 0, 0);
+}
+/**
+ * Calculates the lowest consistency degree of a N-ary constraint.
+ * @param c A constraint.
+ * @return The lowest consistency degree.
+ */ function lowestConsistencyDegreeN(c) {
+    const ev = c.degree();
+    if (0 <= ev) return ev;
+    const emptyIndices = new Array(c.emptySize());
+    let j = 0;
+    const vs = new Array(c.size());
+    for(let i = 0, I = c.size(); i < I; ++i){
+        const x = c.at(i);
+        if (x.isEmpty()) emptyIndices[j++] = i;
+        else vs[i] = x.value();
+    }
+    return checkLCD(c, vs, emptyIndices, 0, 1);
+}
+function checkHCD(c, vs, emptyIndices, currentStep, cd) {
+    const index = emptyIndices[currentStep];
+    const d = c.at(index).domain();
+    if (currentStep === emptyIndices.length - 1) for (const v of d){
+        vs[index] = v;
+        const ev = c.relation()(...vs);
+        if (cd < ev) cd = ev;
+        if (1 === cd) return 1;
+    }
+    else for (const v of d){
+        vs[index] = v;
+        cd = checkHCD(c, vs, emptyIndices, currentStep + 1, cd);
+    }
+    return cd;
+}
+function checkLCD(c, vs, emptyIndices, currentStep, cd) {
+    const index = emptyIndices[currentStep];
+    const d = c.at(index).domain();
+    if (currentStep === emptyIndices.length - 1) for (const v of d){
+        vs[index] = v;
+        const ev = c.relation()(...vs);
+        if (ev < cd) cd = ev;
+        if (0 === cd) return 0;
+    }
+    else for (const v of d){
+        vs[index] = v;
+        cd = checkLCD(c, vs, emptyIndices, currentStep + 1, cd);
+    }
+    return cd;
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gYH7K":[function(require,module,exports,__globalThis) {
+/**
+ * This class implements the forward and backward checking method for fuzzy CSP.
  * The minimum-remaining-values (MRV) heuristic can also be used by specifying the option.
  * Each variable must have its own domain because it hides domain elements as branch pruning.
  * Forward checking is also performed for problems with polynomial constraints.
  *
  * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $8d126dc1fb260d00$export$2d94cf9ddb103458 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    static CONTINUE = 0;
-    static TERMINATE = 1;
-    #vars;
-    #sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-    #relCons;
-    #solWorstDeg = 0;
-    #iterCount;
-    #endTime;
-    #useMRV = false;
-    #degInc = 0;
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "FullChecking", ()=>FullChecking);
+var _assignmentList = require("../misc/assignment-list");
+var _domainPruner = require("../misc/domain-pruner");
+var _problems = require("../../util/problems");
+var _solver = require("../solver");
+class FullChecking extends (0, _solver.Solver) {
+    #xs;
+    #rct;
+    #dps;
+    #sol;
+    #checkedCs;
     #sequence;
-    #unaryCons;
-    #checkedCons;
-    #pruneIntensively = false;
+    #unaryCs;
+    #minDeg;
+    #globalRet;
+    #useMRV;
+    #pruneIntensively;
     /**
-	 * Generates the solver given a fuzzy constraint satisfaction problem.
-	 * @param p A fuzzy problem.
-	 * @param worstSatisfactionDegree Worst satisfaction degree.
-	 */ constructor(p, worstSatisfactionDegree = null){
-        super(p);
-        this.#vars = [
-            ...this._pro.variables()
-        ];
-        this.#sequence = new Array(this._pro.variableSize());
-        this.#initializeRelatedConstraintTable();
-        this.#checkedCons = new Array(this._pro.constraintSize());
-        const temp = [];
-        for (const c1 of this._pro.constraints())if (c1.size() === 1) temp.push(c1);
-        this.#unaryCons = [
-            ...temp
-        ]; // To make it even if it is empty.
-        if (worstSatisfactionDegree) this.#solWorstDeg = worstSatisfactionDegree;
-    }
-    name() {
-        return "Forward Checking for Fuzzy CSPs";
-    }
-    // Initializes a table that caches constraints between two variables.
-    #initializeRelatedConstraintTable() {
-        this.#relCons = [];
-        for(let j = 0; j < this.#vars.length; ++j){
-            this.#relCons.push(new Array(this.#vars.length));
-            for(let i = 0; i < this.#vars.length; ++i)if (i < j) this.#relCons[j][i] = this._pro.constraintsBetween(this.#vars[i], this.#vars[j]);
-        }
-    }
-    // Retrieves an array of constraints from a table that caches constraints between two variables.
-    #getConstraintsBetween(vi_index, vj_index) {
-        if (vi_index < vj_index) return this.#relCons[vj_index][vi_index];
-        return this.#relCons[vi_index][vj_index];
-    }
-    // Prune elements of the domain that make the unary constraint worse than the current worst degree.
-    #pruneUnaryConstraints() {
-        for (const c1 of this.#unaryCons){
-            const v = c1.at(0);
-            const orgVal = v.value(); // Save the value.
-            const d = v.domain();
-            const dc = v.solverObject;
-            for(let i = 0, n = d.size(); i < n; ++i){
-                v.assign(d.at(i));
-                if (c1.satisfactionDegree() <= this.#solWorstDeg) dc.hide(i, -1); // Here's a branch pruning!
-            }
-            v.assign(orgVal); // Restore the value.
-            if (dc.isEmpty()) return false;
-        }
-        return true;
-    }
-    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there is one unassigned variable in the scope of the constraint).
-    #checkForwardConsistency(level4, vi, c3) {
-        const di = vi.domain();
-        const dci = vi.solverObject;
-        for(let i = 0, n = di.size(); i < n; ++i){
-            if (dci.isValueHidden(i)) continue;
-            vi.assign(di.at(i));
-            if (c3.satisfactionDegree() <= this.#solWorstDeg) dci.hide(i, level4); // Here's a branch pruning!
-        }
-        vi.clear();
-        return !dci.isEmpty(); // Succeeds if the domain di of the future variable vi is not empty.
-    }
-    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there are two unassigned variables in the scope of the constraint).
-    #checkForwardConsistency2(level12, vi1, c11) {
-        const di = vi1.domain();
-        const dci = vi1.solverObject;
-        const vj = null;
-        for (const v of c11)if (v.isEmpty() && v !== vi1) {
-            vj = v;
-            break;
-        }
-        const dj = vj.domain();
-        const dcj = vj.solverObject;
-        loop_i: for(let i = 0, ni = di.size(); i < ni; ++i){
-            if (dci.isValueHidden(i)) continue;
-            vi1.assign(di.at(i)); // Tentative assignment to vi
-            for(let j = 0, nj = dj.size(); j < nj; ++j){
-                if (dcj.isValueHidden(j)) continue;
-                vj.assign(dj.at(j)); // Tentative assignment to vj
-                const s = c11.satisfactionDegree();
-                if (s > this.#solWorstDeg) continue loop_i; // Tentative assignment to vi was OK -> next tentative assignment.
-            }
-            dci.hide(i, level12); // It is not a solution when it is 'smaller than or equals'.
-        }
-        vj.clear();
-        vi1.clear();
-        return !dci.isEmpty(); // Succeeds if the domain di of the future variable vi is not empty.
-    }
-    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there are three unassigned variables in the scope of the constraint).
-    #checkForwardConsistency3(level22, vi2, c21) {
-        const di = vi2.domain();
-        const dci = vi2.solverObject;
-        let vj = null;
-        let vk = null;
-        for (const v of c21)if (v.isEmpty() && v !== vi2) {
-            if (vj === null) vj = v;
-            else {
-                vk = v;
-                break;
-            }
-        }
-        const dj = vj.domain();
-        const dk = vk.domain();
-        const dcj = vj.solverObject;
-        const dck = vk.solverObject;
-        loop_i: for(let i = 0, ni = di.size(); i < ni; ++i){
-            if (dci.isValueHidden(i)) continue;
-            vi2.assign(di.at(i)); // Tentative assignment to vi
-            for(let j = 0, nj = dj.size(); j < nj; ++j){
-                if (dcj.isValueHidden(j)) continue;
-                vj.assign(dj.at(j)); // Tentative assignment to vj
-                for(let k = 0, nk = dk.size(); k < nk; ++k){
-                    if (dck.isValueHidden(k)) continue;
-                    vk.assign(dk.at(k)); // Tentative assignment to vk
-                    const s = c21.satisfactionDegree();
-                    if (s > this.#solWorstDeg) continue loop_i; // Tentative assignment to vi was OK -> next tentative assignment.
-                }
-            }
-            dci.hide(i, level22); // It is not a solution when it is 'smaller than or equals'.
-        }
-        vk.clear();
-        vj.clear();
-        vi2.clear();
-        return !dci.isEmpty(); // Succeeds if the domain di of the future variable vi is not empty.
-    }
-    // In the case of polynomial constraints and when there are four or more unassigned variables, all combinations of assignments of unassigned variables are examined and pruned.
-    #checkForwardConsistencyN(level31, vi3, c31, emptySize) {
-        const di = vi3.domain();
-        const dci = vi3.solverObject;
-        const emp = new Array(emptySize - 1);
-        let j = 0;
-        for (const v of c31)if (v.isEmpty() && v !== vi3) emp[j++] = v;
-        const indexes = new Array(emp.length);
-        loop_i: for(let i = 0, n = di.size(); i < n; ++i){
-            if (dci.isValueHidden(i)) continue;
-            vi3.assign(di.at(i)); // Tentative assignment to vi
-            indexes.fill(0);
-            comLoop: while(true){
-                let hidden = false;
-                for(let k = 0; k < emp.length; ++k){
-                    const dk = emp[k].domain();
-                    const dck = emp[k].solverObject;
-                    if (dck.isValueHidden(indexes[k])) {
-                        hidden = true;
-                        break;
-                    }
-                    emp[k].assign(dk.at(indexes[k]));
-                }
-                if (!hidden) {
-                    const s = c31.satisfactionDegree();
-                    if (s > this.#solWorstDeg) continue loop_i; // Tentative assignment to vi was OK -> next tentative assignment.
-                }
-                for(let k = 0; k < emp.length; ++k){
-                    indexes[k] += 1;
-                    if (indexes[k] < emp[k].domain().size()) break;
-                    indexes[k] = 0;
-                    if (k === emp.length - 1) break comLoop;
-                }
-            }
-            dci.hide(i, level31);
-        }
-        for (const v of emp)v.clear();
-        vi3.clear();
-        return !dci.isEmpty(); // Succeeds if the domain di of the future variable vi is not empty.
-    }
-    // Checks for possible assignment to a future variable from the current variable assignment.
-    #checkForward(level41, index) {
-        for (const v_i of this.#vars){
-            if (!v_i.isEmpty()) continue; // If it is a past or present variable.
-            const cs = this.#getConstraintsBetween(index, v_i.index());
-            for (const c1 of cs){
-                const emptySize = c1.emptyVariableSize();
-                if (emptySize === 1) {
-                    if (!this.#checkForwardConsistency(level41, v_i, c1)) return false;
-                } else if (this.#pruneIntensively) {
-                    if (emptySize === 2) {
-                        if (!this.#checkForwardConsistency2(level41, v_i, c1)) return false;
-                    } else if (emptySize === 3) {
-                        if (!this.#checkForwardConsistency3(level41, v_i, c1)) return false;
-                    } else if (emptySize > 3) {
-                        if (!this.#checkForwardConsistencyN(level41, v_i, c1, emptySize)) return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-    // Checks to see if the current variable assignment makes the degree of the past variable worse than the current worst degree.
-    #checkBackwardConsistency(vc1) {
-        this.#checkedCons.fill(false); // Reuse.
-        for(let i = 0; i < this.#vars.length; ++i){
-            const vi = this.#vars[i];
-            if (vi === vc1 || vi.isEmpty()) continue; // If it is a future variable or a present variable.
-            const cs = this.#getConstraintsBetween(vc1.index(), i);
-            for (const c1 of cs){
-                if (this.#checkedCons[c1.index()]) continue; // Because of the possibility of duplication in polynomial constraints
-                const s = c1.satisfactionDegree();
-                if (s !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED && s <= this.#solWorstDeg) return false;
-                this.#checkedCons[c1.index()] = true;
-            }
-        }
-        return true;
-    }
-    #refresh() {
-        for(let i = 0; i < this.#sequence.length; ++i){
-            const index_vi = this.#sequence[i].index();
-            for(let j = i + 1; j < this.#sequence.length; ++j){
-                const vj = this.#sequence[j];
-                const cs = this.#getConstraintsBetween(index_vi, vj.index());
-                for (const c1 of cs){
-                    const orgVal = vj.value();
-                    const dj = vj.domain();
-                    const dcj = vj.solverObject;
-                    for(let k = 0, n = dj.size(); k < n; ++k){
-                        if (dcj.isValueHidden(k)) continue;
-                        vj.assign(dj.at(k));
-                        if (c1.satisfactionDegree() <= this.#solWorstDeg) dcj.hide(k, i); // Here's a branch pruning!
-                    }
-                    vj.assign(orgVal);
-                }
-            }
-        }
-    }
-    // Returns the index of the smallest domain variable.
-    #indexOfVariableWithMRV() {
-        let index = 0;
-        let size = Number.MAX_VALUE;
-        for(let i = 0; i < this.#vars.length; ++i){
-            const v = this.#vars[i];
-            if (!v.isEmpty()) continue;
-            const d = v.domain();
-            const s = d.size() - v.solverObject.hiddenSize();
-            if (s < size) {
-                size = s;
-                index = i;
-            }
-        }
-        return index;
-    }
-    // Performs search one variable at a time.
-    #branch(level5) {
-        let bc = $8d126dc1fb260d00$export$2d94cf9ddb103458.CONTINUE;
-        const vc_index = this.#useMRV ? this.#indexOfVariableWithMRV() : level5;
-        const vc = this.#vars[vc_index];
-        const d = vc.domain();
-        const dc = vc.solverObject;
-        this.#sequence[level5] = vc;
-        for(let i = 0, n = d.size(); i < n; ++i){
-            if (dc.isValueHidden(i)) continue;
-            if (this._iterLimit && this._iterLimit < this.#iterCount++ || this.#endTime < Date.now()) {
-                bc = $8d126dc1fb260d00$export$2d94cf9ddb103458.TERMINATE; // Search terminated due to restrictions.
-                break;
-            }
-            vc.assign(d.at(i));
-            for (const v of this.#vars)v.solverObject.reveal(level5);
-            if (!this.#checkBackwardConsistency(vc)) continue;
-            if (!this.#checkForward(level5, vc_index)) continue;
-            const nextLevel = level5 + 1;
-            bc = nextLevel === this.#vars.length - 1 ? this.#branchLast(nextLevel) : this.#branch(nextLevel);
-            if (bc === $8d126dc1fb260d00$export$2d94cf9ddb103458.TERMINATE) break;
-        }
-        if (bc === $8d126dc1fb260d00$export$2d94cf9ddb103458.CONTINUE) for (const v of this.#vars)v.solverObject.reveal(level5);
-        vc.clear();
-        return bc;
-    }
-    // Performs search on the last variable.
-    #branchLast(level6) {
-        let bc = $8d126dc1fb260d00$export$2d94cf9ddb103458.CONTINUE;
-        const vc = this.#vars[this.#useMRV ? this.#indexOfVariableWithMRV() : level6];
-        const d = vc.domain();
-        const dc = vc.solverObject;
-        this.#sequence[level6] = vc;
-        for(let i = 0, n = d.size(); i < n; ++i){
-            if (dc.isValueHidden(i)) continue;
-            if (this._iterLimit && this._iterLimit < this.#iterCount++ || this.#endTime < Date.now()) {
-                bc = $8d126dc1fb260d00$export$2d94cf9ddb103458.TERMINATE; // Search terminated due to restrictions.
-                break;
-            }
-            vc.assign(d.at(i));
-            const deg = this._pro.worstSatisfactionDegree();
-            if (deg > this.#solWorstDeg) {
-                this.#solWorstDeg = deg;
-                this.#sol.setProblem(this._pro);
-                bc = $8d126dc1fb260d00$export$2d94cf9ddb103458.TERMINATE;
-                if (this._targetDeg !== null && this._targetDeg <= this.#solWorstDeg) break;
-                this.#pruneUnaryConstraints();
-                this.#refresh();
-            }
-        }
-        vc.clear();
-        return bc;
-    }
-    // Do search.
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        for (const v of this.#vars)v.solverObject = new $f7b05997b0c3179b$export$f307752a90139b0e(v.domain().size()); // Generation of domain pruners.
-        this._pro.clearAllVariables();
-        if (!this.#pruneUnaryConstraints()) return false; // Since _worstSatisfactionDegree_ has been updated, call this function.
-        let success = false;
-        while(true){
-            const bc = this.#branch(0);
-            if (bc === $8d126dc1fb260d00$export$2d94cf9ddb103458.TERMINATE) {
-                if (this._iterLimit && this._iterLimit < this.#iterCount++) {
-                    this._debugOutput("stop: number of iterations has reached the limit");
-                    break;
-                }
-                if (this.#endTime < Date.now()) {
-                    this._debugOutput("stop: time limit has been reached");
-                    break;
-                }
-            }
-            if (this.#sol.isEmpty()) break;
-            this._debugOutput(`\tfound a solution: ${this.#solWorstDeg}`);
-            if (this.foundSolution(this.#sol, this.#solWorstDeg)) {
-                success = true;
-                break;
-            }
-            if (this._targetDeg === null) {
-                success = true;
-                this.#solWorstDeg += this.#degInc; // Find the next solution within the limit.
-            } else if (this._targetDeg <= this.#solWorstDeg) {
-                this._debugOutput("stop: current degree is above the target");
-                success = true;
-                break;
-            }
-            for (const v of this.#vars)v.solverObject.revealAll();
-        }
-        this.#sol.apply();
-        for (const v of this.#vars)v.solverObject = null; // Delete branch pruner
-        return success;
-    }
-    /**
-	 * Constraint satisfaction degree is set as an achievement goal that serves as a condition for stopping the solver.
-	 * The solver stops as successful when the specified degree is reached or exceeded.
-	 * The default (unset) is 0.8.
-	 * @param rate Degree. null indicates not set.
-	 */ setTargetRate(rate = null) {
-        this._targetDeg = rate;
-        if (this._targetDeg === null) this.#solWorstDeg = 0;
-        else {
-            // Find the worstSatisfactionDegree_ that is slightly smaller than the targetDegree_.
-            let e = Number.MIN_VALUE;
-            this.#solWorstDeg = this._targetDeg - e;
-            while(this.#solWorstDeg >= this._targetDeg){
-                e *= 10;
-                this.#solWorstDeg = this._targetDeg - e;
-            }
-        }
+	 * Generates a solver.
+	 */ constructor(){
+        super(), this.#useMRV = true, this.#pruneIntensively = false;
     }
     /**
 	 * Specify whether to use the minimum-remaining-values (MRV) heuristic.
@@ -4857,12 +3408,6 @@ $parcel$export($8d126dc1fb260d00$exports, "FuzzyForwardChecking", ()=>$8d126dc1f
 	 * @param flag Use MRV if true.
 	 */ setUsingMinimumRemainingValuesHeuristics(flag) {
         this.#useMRV = flag;
-    }
-    /**
-	 * If a solution is found and the search continues, it specifies how much the worst constraint satisfaction degree should be increased.
-	 * @param degree Increasing constraint satisfaction degree.
-	 */ setIncrementStepOfWorstSatisfactionDegree(degree) {
-        this.#degInc = degree;
     }
     /**
 	 * Specifies whether or not to intensively prune branches when the problem contains 3- or n-ary constraints.
@@ -4872,205 +3417,716 @@ $parcel$export($8d126dc1fb260d00$exports, "FuzzyForwardChecking", ()=>$8d126dc1f
 	 */ setIntensivePruning(flag) {
         this.#pruneIntensively = flag;
     }
-}
-var $bbd1d315bf8940be$exports = {};
-$parcel$export($bbd1d315bf8940be$exports, "FuzzyForwardCheckingBc", ()=>$bbd1d315bf8940be$export$532d5536583284b8);
-/**
- * This class implements the forward checking method for fuzzy CSPs that contain only binary constraints.
- * The minimum-remaining-values (MRV) heuristic can also be used by specifying the option.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $bbd1d315bf8940be$export$532d5536583284b8 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    static CONTINUE = 0;
-    static TERMINATE = 1;
-    #vars;
-    #sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-    #relCons;
-    #solWorstDeg = 0;
-    #iterCount;
-    #endTime;
-    #useMRV = false;
-    #degInc = 0;
     /**
-	 * Generates the solver given a fuzzy constraint satisfaction problem.
-	 * @param p A fuzzy problem.
-	 * @param worstSatisfactionDegree Worst satisfaction degree.
-	 */ constructor(p, worstSatisfactionDegree = null){
-        super(p);
-        this.#vars = [
-            ...this._pro.variables()
+	 * {@override}
+	 */ name() {
+        return 'Full Checking';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#xs = [
+            ...this.pro.variables()
         ];
-        this.#initializeRelatedConstraintTable();
-        this.#solWorstDeg = Math.max(0, p.worstSatisfactionDegree());
-        if (worstSatisfactionDegree) this.#solWorstDeg = worstSatisfactionDegree;
+        this.#rct = (0, _problems.createRelatedConstraintTable)(this.pro, this.#xs);
+        this.#dps = Array.from(this.#xs, (x)=>new (0, _domainPruner.DomainPruner)(x.domain().size()));
+        this.#sol = new (0, _assignmentList.AssignmentList)();
+        this.#checkedCs = new Set();
+        this.#sequence = new Array(this.pro.variableSize());
+        this.#unaryCs = this.pro.constraints().filter((c)=>c.size() === 1);
+        this.#minDeg = 0;
+        this.monitor.initialize();
     }
-    name() {
-        return "Forward Checking for Fuzzy CSPs of Binary Constraints";
-    }
-    foundSolution() {
-        return false;
-    }
-    // Initializes a table that caches constraints between two variables.
-    #initializeRelatedConstraintTable() {
-        this.#relCons = [];
-        for(let j = 0; j < this.#vars.length; ++j){
-            this.#relCons.push(new Array(this.#vars.length));
-            for(let i = 0; i < this.#vars.length; ++i)if (i < j) this.#relCons[j][i] = this._pro.constraintsBetween(this.#vars[i], this.#vars[j]);
+    /**
+	 * {@override}
+	 */ exec() {
+        let ret = null;
+        while(ret === null){
+            this.#globalRet = false;
+            this.pro.clearAllVariables();
+            if (!this.#pruneUnaryConstraints()) {
+                ret = false;
+                break;
+            }
+            ret = this.#branch(0);
+            this.#sol.apply();
         }
+        return ret === true;
     }
-    // Retrieves an array of constraints from a table that caches constraints between two variables.
-    #getConstraintsBetween(vi_index1, vj_index1) {
-        if (vi_index1 < vj_index1) return this.#relCons[vj_index1][vi_index1];
-        return this.#relCons[vi_index1][vj_index1];
-    }
-    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there is one unassigned variable in the scope of the constraint).
-    #checkForwardConsistency(level7, vi4, c4) {
-        const di = vi4.domain();
-        const dci = vi4.solverObject;
-        for(let i = 0, n = di.size(); i < n; ++i){
-            if (dci.isValueHidden(i)) continue;
-            vi4.assign(di.at(i));
-            if (c4.satisfactionDegree() <= this.#solWorstDeg) dci.hide(i, level7); // Here's a branch pruning!
+    // Prune elements of the domain that make the unary constraint worse than the current worst degree.
+    #pruneUnaryConstraints() {
+        for (const c of this.#unaryCs){
+            const x = c.at(0);
+            const origV = x.value(); // Save the value.
+            const d = x.domain();
+            const dp = this.#dps[x.index()];
+            for(let i = 0, n = d.size(); i < n; ++i){
+                x.assign(d.at(i));
+                if (c.degree() <= this.#minDeg) dp.prune(i, -1); // Here's a branch pruning!
+            }
+            x.assign(origV); // Restore the value.
+            if (dp.isEmpty()) return false;
         }
-        vi4.clear();
-        return !dci.isEmpty(); // Succeeds if the domain di of the future variable vi is not empty.
+        return true;
+    }
+    #branch(level, curDeg = 1) {
+        if (level === this.pro.variableSize()) {
+            const ev = this.pro.degree();
+            this.#sol.setProblem(this.pro);
+            this.monitor.outputDebugString('\t' + `Evaluation ${ev}`);
+            if (this.#minDeg < ev) {
+                this.#minDeg = ev;
+                this.#globalRet = true;
+                if (this.monitor.solutionFound(this.#sol, ev)) return true; // Success.
+            }
+            return this.monitor.check(ev);
+        }
+        let ret = null;
+        if (null !== (ret = this.monitor.check())) return ret; // Success or failure.
+        const x = this.#xs[this.#useMRV ? (0, _domainPruner.indexOfVariableWithMRV)(this.#xs, this.#dps) : level];
+        const d = x.domain();
+        const dp = this.#dps[x.index()];
+        this.#sequence[level] = x;
+        for(let i = 0, n = d.size(); i < n; ++i){
+            if (dp.isPruned(i)) continue;
+            x.assign(d.at(i));
+            const deg = Math.min(curDeg, this.#getBackwardConsistency(x));
+            if (deg <= this.#minDeg) continue;
+            if (this.#checkForward(level, x)) {
+                ret = this.#branch(level + 1, deg);
+                if (null !== ret || this.#globalRet) break;
+            }
+            for (const dp of this.#dps)dp.recover(level);
+        }
+        if (ret === null) {
+            for (const dp of this.#dps)dp.recover(level);
+            x.clear();
+        }
+        return ret;
     }
     // Checks for possible assignment to a future variable from the current variable assignment.
-    #checkForward(level13, index1) {
-        for (const v_i of this.#vars){
-            if (!v_i.isEmpty()) continue; // If it is a past or present variable.
-            const cs = this.#getConstraintsBetween(index1, v_i.index());
-            for (const c1 of cs)if (c1.size() === 2) {
-                if (!this.#checkForwardConsistency(level13, v_i, c1)) return false;
+    #checkForward(level, x) {
+        for (const x_i of this.#xs){
+            if (!x_i.isEmpty()) continue; // If it is a past or present variable.
+            const cs = this.#getConstraintsBetween(x.index(), x_i.index());
+            const dp_i = this.#dps[x_i.index()];
+            const d_i = x_i.domain();
+            for (const c of cs){
+                const evs = c.emptySize();
+                if (1 === evs) {
+                    if (!this.#checkForwardConsistency(level, x_i, d_i, dp_i, c)) return false;
+                } else if (this.#pruneIntensively) {
+                    if (2 === evs) {
+                        if (!this.#checkForwardConsistency2(level, x_i, d_i, dp_i, c)) return false;
+                    } else if (3 === evs) {
+                        if (!this.#checkForwardConsistency3(level, x_i, d_i, dp_i, c)) return false;
+                    } else if (3 < evs) {
+                        if (!this.#checkForwardConsistencyN(level, x_i, d_i, dp_i, c, evs)) return false;
+                    }
+                }
             }
         }
         return true;
     }
-    // Returns the index of the smallest domain variable.
-    #indexOfVariableWithMRV() {
-        let index = 0;
-        let size = Number.MAX_VALUE;
-        for(let i = 0; i < this.#vars.length; ++i){
-            const v = this.#vars[i];
-            if (!v.isEmpty()) continue;
-            const d = v.domain();
-            const s = d.size() - v.solverObject.hiddenSize();
-            if (s < size) {
-                size = s;
-                index = i;
-            }
-        }
-        return index;
+    // Retrieves an array of constraints from a table that caches constraints between two variables.
+    #getConstraintsBetween(i, j) {
+        return i < j ? this.#rct[j][i] : this.#rct[i][j];
     }
-    // Performs search one variable at a time.
-    #branch(level23) {
-        let bc = $bbd1d315bf8940be$export$532d5536583284b8.CONTINUE;
-        const vc_index = this.#useMRV ? this.#indexOfVariableWithMRV() : level23;
-        const vc = this.#vars[vc_index];
-        const d = vc.domain();
-        const dc = vc.solverObject;
+    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there is one unassigned variable in the scope of the constraint).
+    #checkForwardConsistency(level, x, d, dp, c) {
         for(let i = 0, n = d.size(); i < n; ++i){
-            if (dc.isValueHidden(i)) continue;
-            if (this._iterLimit && this._iterLimit < this.#iterCount++ || this.#endTime < Date.now()) {
-                bc = $bbd1d315bf8940be$export$532d5536583284b8.TERMINATE; // Search terminated due to restrictions.
+            if (dp.isPruned(i)) continue;
+            x.assign(d.at(i));
+            if (c.degree() <= this.#minDeg) dp.prune(i, level);
+        }
+        x.clear();
+        return !dp.isEmpty(); // Failure if the domain of one of the future variables is empty.
+    }
+    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there are two unassigned variables in the scope of the constraint).
+    #checkForwardConsistency2(level, x_i, d_i, dp_i, c) {
+        let x_j = null;
+        for (const x of c)if (x.isEmpty() && x !== x_i) {
+            x_j = x;
+            break;
+        }
+        const d_j = x_j.domain();
+        const dp_j = this.#dps[x_j.index()];
+        loop_i: for(let i = 0, ni = d_i.size(); i < ni; ++i){
+            if (dp_i.isPruned(i)) continue;
+            x_i.assign(d_i.at(i)); // Tentative assignment to x_i
+            for(let j = 0, nj = d_j.size(); j < nj; ++j){
+                if (dp_j.isPruned(j)) continue;
+                x_j.assign(d_j.at(j)); // Tentative assignment to x_j
+                if (this.#minDeg < c.degree()) continue loop_i; // Tentative assignment to x_i was OK -> next tentative assignment.
+            }
+            dp_i.prune(i, level); // It is not a solution when it is 'smaller than or equals'.
+        }
+        x_j.clear();
+        x_i.clear();
+        return !dp_i.isEmpty(); // Succeeds if the domain di of the future variable is not empty.
+    }
+    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there are three unassigned variables in the scope of the constraint).
+    #checkForwardConsistency3(level, x_i, d_i, dp_i, c) {
+        let x_j = null;
+        let x_k = null;
+        for (const x of c)if (x.isEmpty() && x !== x_i) {
+            if (x_j === null) x_j = x;
+            else {
+                x_k = x;
                 break;
             }
-            vc.assign(d.at(i));
-            for (const v of this.#vars)v.solverObject.reveal(level23);
-            if (!this.#checkForward(level23, vc_index)) continue;
-            const nextLevel = level23 + 1;
-            bc = nextLevel === this.#vars.length - 1 ? this.#branchLast(nextLevel) : this.#branch(nextLevel);
-            if (bc === $bbd1d315bf8940be$export$532d5536583284b8.TERMINATE) break;
         }
-        if (bc === $bbd1d315bf8940be$export$532d5536583284b8.CONTINUE) for (const v of this.#vars)v.solverObject.reveal(level23);
-        vc.clear();
-        return bc;
-    }
-    // Performs search on the last variable.
-    #branchLast(level32) {
-        let bc = $bbd1d315bf8940be$export$532d5536583284b8.CONTINUE;
-        const vc = this.#vars[this.#useMRV ? this.#indexOfVariableWithMRV() : level32];
-        const d = vc.domain();
-        const dc = vc.solverObject;
-        for(let i = 0, n = d.size(); i < n; ++i){
-            if (dc.isValueHidden(i)) continue;
-            if (this._iterLimit && this._iterLimit < this.#iterCount++ || this.#endTime < Date.now()) {
-                bc = $bbd1d315bf8940be$export$532d5536583284b8.TERMINATE; // Search terminated due to restrictions.
-                break;
-            }
-            vc.assign(d.at(i));
-            const deg = this._pro.worstSatisfactionDegree();
-            if (deg > this.#solWorstDeg) {
-                this.#solWorstDeg = deg;
-                this.#sol.setProblem(this._pro);
-                bc = $bbd1d315bf8940be$export$532d5536583284b8.TERMINATE; // Search terminated due to restrictions.
-                if (this._targetDeg !== null && this._targetDeg <= this.#solWorstDeg) break;
-            }
-        }
-        vc.clear();
-        return bc;
-    }
-    // Do search.
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        for (const v of this.#vars)v.solverObject = new $f7b05997b0c3179b$export$f307752a90139b0e(v.domain().size()); // Generation of domain pruners.
-        this._pro.clearAllVariables();
-        const sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        let success = false;
-        while(true){
-            const bc = this.#branch(0);
-            if (bc === $bbd1d315bf8940be$export$532d5536583284b8.TERMINATE) {
-                if (this._iterLimit && this._iterLimit < this.#iterCount++) {
-                    this._debugOutput("stop: number of iterations has reached the limit");
-                    break;
-                }
-                if (this.#endTime < Date.now()) {
-                    this._debugOutput("stop: time limit has been reached");
-                    break;
+        const d_j = x_j.domain();
+        const d_k = x_k.domain();
+        const dp_j = this.#dps[x_j.index()];
+        const dp_k = this.#dps[x_k.index()];
+        loop_i: for(let i = 0, ni = d_i.size(); i < ni; ++i){
+            if (dp_i.isPruned(i)) continue;
+            x_i.assign(d_i.at(i)); // Tentative assignment to x_i
+            for(let j = 0, nj = d_j.size(); j < nj; ++j){
+                if (dp_j.isPruned(j)) continue;
+                x_j.assign(d_j.at(j)); // Tentative assignment to x_j
+                for(let k = 0, nk = d_k.size(); k < nk; ++k){
+                    if (dp_k.isPruned(k)) continue;
+                    x_k.assign(d_k.at(k)); // Tentative assignment to x_k
+                    if (this.#minDeg < c.degree()) continue loop_i; // Tentative assignment to x_i was OK -> next tentative assignment.
                 }
             }
-            if (this.#sol.isEmpty()) break;
-            sol.setAssignmentList(this.#sol);
-            this.#sol.clear(); // Clear it so that if the solution is not found in the next search, it will be known.
-            this._debugOutput(`\tfound a solution: ${this.#solWorstDeg}`);
-            if (this.foundSolution(sol, this.#solWorstDeg)) {
-                success = true;
-                break;
-            }
-            if (this._targetDeg === null) {
-                success = true;
-                if (this.#solWorstDeg + this.#degInc > 1) break;
-                this.#solWorstDeg += this.#solWorstDeg + this.#degInc > 1 ? 0 : this.#degInc; // Find the next solution within the limit.
-            } else if (this._targetDeg <= this.#solWorstDeg) {
-                this._debugOutput(`stop: current degree is above the target`);
-                success = true;
-                break;
-            }
-            for (const v of this.#vars)v.solverObject.revealAll();
+            dp_i.prune(i, level); // It is not a solution when it is 'smaller than or equals'.
         }
-        sol.apply();
-        for (const v of this.#vars)v.solverObject = null; // Delete branch pruner
-        return success;
+        x_k.clear();
+        x_j.clear();
+        x_i.clear();
+        return !dp_i.isEmpty(); // Succeeds if the domain di of the future variable is not empty.
+    }
+    // In the case of polynomial constraints and when there are four or more unassigned variables, all combinations of assignments of unassigned variables are examined and pruned.
+    #checkForwardConsistencyN(level, x_i, d_i, dp_i, c, emptySize) {
+        const x_ = new Array(emptySize - 1);
+        let j = 0;
+        for (const x of c)if (x.isEmpty() && x !== x_i) x_[j++] = x;
+        const indexes = new Array(x_.length);
+        loop_i: for(let i = 0, n = d_i.size(); i < n; ++i){
+            if (dp_i.isPruned(i)) continue;
+            x_i.assign(d_i.at(i)); // Tentative assignment to x_i
+            indexes.fill(0);
+            comLoop: while(true){
+                let hidden = false;
+                for(let k = 0; k < x_.length; ++k){
+                    const d_k = x_[k].domain();
+                    const dp_k = this.#dps[x_[k].index()];
+                    if (dp_k.isPruned(indexes[k])) {
+                        hidden = true;
+                        break;
+                    }
+                    x_[k].assign(d_k.at(indexes[k]));
+                }
+                if (!hidden) {
+                    if (this.#minDeg < c.degree()) continue loop_i; // Tentative assignment to x_i was OK -> next tentative assignment.
+                }
+                for(let k = 0; k < x_.length; ++k){
+                    indexes[k] += 1;
+                    if (indexes[k] < x_[k].domain().size()) break;
+                    indexes[k] = 0;
+                    if (k === x_.length - 1) break comLoop;
+                }
+            }
+            dp_i.prune(i, level);
+        }
+        for (const x of x_)x.clear();
+        x_i.clear();
+        return !dp_i.isEmpty(); // Succeeds if the domain di of the future variable is not empty.
+    }
+    // Checks to see if the current variable assignment makes the degree of the past variable worse than the current worst degree.
+    #getBackwardConsistency(x) {
+        let min = Number.MAX_VALUE;
+        this.#checkedCs.clear(); // Reuse.
+        for (const x_i of this.#xs){
+            if (x_i === x || x_i.isEmpty()) continue;
+            const cs = this.#getConstraintsBetween(x.index(), x_i.index());
+            for (const c of cs)if (!this.#checkedCs.has(c)) {
+                const ev = c.degree();
+                if (0 <= ev /* ev !== UNDEFINED */  && ev < min) min = ev;
+                this.#checkedCs.add(c);
+            }
+        }
+        return min;
+    }
+}
+
+},{"../misc/assignment-list":"7XBf8","../misc/domain-pruner":"9ljra","../../util/problems":"kAwtv","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9ljra":[function(require,module,exports,__globalThis) {
+/**
+ * This class holds the branch pruning states for a domain.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-22
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "DomainPruner", ()=>DomainPruner);
+// -----------------------------------------------------------------------------
+/**
+ * Returns the index of the variable with the minimum remaining values (MRV).
+ * @param xs An array of variables.
+ * @param dps An array of domain pruners.
+ * @return The index of the variable with the minimum remaining values.
+ */ parcelHelpers.export(exports, "indexOfVariableWithMRV", ()=>indexOfVariableWithMRV);
+class DomainPruner {
+    static #UNPRUNED = Number.MIN_SAFE_INTEGER;
+    #prunedLvs;
+    #prunedSize;
+    /**
+	 * Generates a class that holds branch pruning states for a domain.
+	 * @param size Size of the corresponding domain
+	 */ constructor(size){
+        this.#prunedSize = 0;
+        this.#prunedLvs = new Array(size);
+        this.#prunedLvs.fill(DomainPruner.#UNPRUNED);
     }
     /**
-	 * Constraint satisfaction degree is set as an achievement goal that serves as a condition for stopping the solver.
-	 * The solver stops as successful when the specified degree is reached or exceeded.
-	 * The default (unset) is 0.8.
-	 * @param rate Degree. null indicates not set.
-	 */ setTargetRate(rate = null) {
-        this._targetDeg = rate;
-        if (this._targetDeg === null) this.#solWorstDeg = 0;
-        else {
-            // Find the worstSatisfactionDegree_ that is slightly smaller than the targetDegree_.
-            let e = Number.MIN_VALUE;
-            this.#solWorstDeg = this._targetDeg - e;
-            while(this.#solWorstDeg >= this._targetDeg){
-                e *= 10;
-                this.#solWorstDeg = this._targetDeg - e;
-            }
+	 * Returns the size of the erased element.
+	 * @return Size of the erased element.
+	 */ prunedSize() {
+        return this.#prunedSize;
+    }
+    /**
+	 * Erases the element at the specified index.
+	 * @param index Index.
+	 * @param level Level.
+	 */ prune(index, level) {
+        if (this.#prunedLvs[index] === DomainPruner.#UNPRUNED) ++this.#prunedSize;
+        else throw new Error();
+        this.#prunedLvs[index] = level;
+    }
+    /**
+	 * Returns whether the element is empty or not.
+	 * Returns true if all elements have been erased.
+	 * @return True if empty.
+	 */ isEmpty() {
+        return this.#prunedLvs.length === this.#prunedSize;
+    }
+    /**
+	 * Returns whether or not the element at the specified index has been erased.
+	 * @param index Index.
+	 * @return True if erased.
+	 */ isPruned(index) {
+        return this.#prunedLvs[index] !== DomainPruner.#UNPRUNED;
+    }
+    /**
+	 * Restores the value that had been erased, by specifying a level.
+	 * @param level Level
+	 */ recover(level) {
+        for(let i = 0; i < this.#prunedLvs.length; ++i)if (this.#prunedLvs[i] === level) {
+            this.#prunedLvs[i] = DomainPruner.#UNPRUNED;
+            --this.#prunedSize;
         }
+    }
+    /**
+	 * Restores all erased values.
+	 */ recoverAll() {
+        this.#prunedLvs.fill(DomainPruner.#UNPRUNED);
+        this.#prunedSize = 0;
+    }
+}
+function indexOfVariableWithMRV(xs, dps) {
+    let index = 0;
+    let size = Number.MAX_VALUE;
+    for(let i = 0; i < xs.length; ++i){
+        const x = xs[i];
+        if (!x.isEmpty()) continue;
+        const d = x.domain();
+        const s = d.size() - dps[x.index()].prunedSize();
+        if (s < size) {
+            size = s;
+            index = i;
+        }
+    }
+    return index;
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kAwtv":[function(require,module,exports,__globalThis) {
+/**
+ * Utility class for constraint satisfaction problems.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-22
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Create a table that caches constraints between two variables.
+ * @param pro A problem.
+ * @param xs  An array of variables.
+ * @return A table that caches constraints between two variables.
+ */ parcelHelpers.export(exports, "createRelatedConstraintTable", ()=>createRelatedConstraintTable);
+// -----------------------------------------------------------------------------
+/**
+ * Calculates the average path length.
+ * @param p A problem.
+ * @return Average path length.
+ */ parcelHelpers.export(exports, "averagePathLengths", ()=>averagePathLengths);
+/**
+ * Calculates the average path length for a given variable.
+ * @param p A problem.
+ * @param x A variable of the problem.
+ * @return Average path length.
+ */ parcelHelpers.export(exports, "averagePathLength", ()=>averagePathLength);
+// -----------------------------------------------------------------------------
+/**
+ * Gets an array containing all domains.
+ * @param p A problem.
+ * @return Array of domains.
+ */ parcelHelpers.export(exports, "domains", ()=>domains);
+/**
+ * Set up all domains.
+ * @param p A problem.
+ * @param ds Array of domains.
+ */ parcelHelpers.export(exports, "setDomains", ()=>setDomains);
+// -----------------------------------------------------------------------------
+/**
+ * Returns the array of possible satisfaction degree values for all unary constraints.
+ * @param p A problem.
+ * @param degrees Array of degree values.
+ * @return The array.
+ */ parcelHelpers.export(exports, "possibleDegreesOfUnaryConstraints", ()=>possibleDegreesOfUnaryConstraints);
+// -----------------------------------------------------------------------------
+/**
+ * Returns a view of the fuzzy constraint satisfaction problem as a crisp constraint satisfaction problem.
+ * The relations and domains of the specified fuzzy constraint satisfaction problem are reused, but the other elements are newly generated.
+ * Note: Assignments to variables and changes to domains of the view are reflected in the variables of the original problem.
+ * @param p A fuzzy constraint satisfaction problem.
+ * @param threshold The threshold of constraint satisfaction degree. A constraint is considered satisfied when the constraint satisfaction degree is greater than or equal to this value.
+ * @return A crisp constraint satisfaction problem.
+ */ parcelHelpers.export(exports, "toViewAsCrispProblem", ()=>toViewAsCrispProblem);
+var _problem = require("../problem/problem");
+var _variable = require("../problem/variable");
+var _variables = require("./variables");
+var _relations = require("./relations");
+function createRelatedConstraintTable(pro, xs) {
+    const rct = [];
+    for(let j = 0; j < xs.length; ++j){
+        rct.push(new Array(xs.length));
+        for(let i = 0; i < xs.length; ++i)if (i < j) rct[j][i] = pro.constraintsBetween(xs[i], xs[j]);
+    }
+    return rct;
+}
+function averagePathLengths(p) {
+    const ls = new Array(p.variableSize());
+    for (const x of p.variables())ls[x.index()] = averagePathLength(p, x);
+    return ls;
+}
+function averagePathLength(p, x) {
+    const ls = new Array(p.variableSize());
+    ls.fill(Number.MAX_VALUE);
+    const xs = new Set();
+    xs.add(x);
+    ls[x.index()] = 0;
+    getPathLength(p, x, ls, 0, xs);
+    let connectedSize = 0;
+    let sum = 0;
+    for(let i = 0; i < ls.length; ++i)if (ls[i] !== Number.MAX_VALUE && i !== x.index()) {
+        ++connectedSize;
+        sum += ls[i];
+    }
+    if (0 === connectedSize) return 0;
+    return sum / connectedSize;
+}
+function getPathLength(p, x, length, baseLength, xo) {
+    const xn = [];
+    for (const c of x){
+        for (const xi of c)if (length[xi.index()] === Number.MAX_VALUE) {
+            xn.push(xi);
+            length[xi.index()] = baseLength + 1;
+        }
+    }
+    for (const xi of xn)xo.add(xi);
+    for (const xi of xn)getPathLength(p, xi, length, baseLength + 1, xo);
+}
+function domains(p) {
+    const ds = [];
+    for (const x of p.variables())ds.push(x.domain());
+    return ds;
+}
+function setDomains(p, ds) {
+    for(let i = 0; i < ds.length; ++i)p.variableAt(i).domain(ds[i]);
+}
+function possibleDegreesOfUnaryConstraints(p, degrees) {
+    for (const c of p.constraints()){
+        if (c.size() !== 1) continue;
+        const x = c.at(0);
+        const origV = x.value(); // Save the value.
+        for (const v of x.domain()){
+            x.assign(v);
+            degrees.push(c.degree());
+        }
+        x.assign(origV); // Restore the value.
+    }
+    return degrees;
+}
+function toViewAsCrispProblem(p, threshold) {
+    const cp = new CrispFuzzyProblem();
+    for (const x of p.variables())cp.createVariable(x);
+    for (const c of p.constraints()){
+        const xs = [];
+        for (const x of c)xs.push(cp.variableAt(x.index()));
+        cp.createConstraint((0, _relations.createCrispFuzzyRelation)(c.relation(), threshold), xs);
+    }
+    return cp;
+}
+class CrispFuzzyProblem extends (0, _problem.Problem) {
+    createVariable(d_x, _value = null, _name = '') {
+        if (d_x instanceof (0, _variable.Variable)) {
+            const iv = new (0, _variables.ImaginaryVariable)(d_x);
+            this.addVariable(iv);
+            return iv;
+        }
+        throw new RangeError();
+    }
+}
+
+},{"../problem/problem":"4Nvsk","../problem/variable":"1Z7Sx","./variables":"1D2XX","./relations":"6dYYD","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1D2XX":[function(require,module,exports,__globalThis) {
+/**
+ * Classes of utility variables.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Class that represents an observable variable.
+ */ parcelHelpers.export(exports, "ObservableVariable", ()=>ObservableVariable);
+/**
+ * Class that represents an imaginary variable.
+ */ parcelHelpers.export(exports, "ImaginaryVariable", ()=>ImaginaryVariable);
+var _variable = require("../problem/variable");
+class ObservableVariable extends (0, _variable.Variable) {
+    #observer;
+    // Called only from Problem.
+    constructor(d, observer){
+        super(d);
+        this.#observer = observer;
+    }
+    /**
+	 * Assign a value.
+	 * @param v Value.
+	 */ assign(v) {
+        super.assign(v);
+        if (this.#observer) this.#observer(this, v);
+    }
+}
+class ImaginaryVariable extends (0, _variable.Variable) {
+    #orig;
+    constructor(x){
+        super(x.domain());
+        this.#orig = x;
+        this.setName(x.name());
+        this.assign(x.value());
+    }
+    assign(v) {
+        this.#orig.assign(v);
+    }
+    domain(d) {
+        if (d === undefined) return this.#orig.domain();
+        else this.#orig.domain(d);
+    }
+    value() {
+        return this.#orig.value();
+    }
+}
+
+},{"../problem/variable":"1Z7Sx","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6dYYD":[function(require,module,exports,__globalThis) {
+/**
+ * Relations.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-22
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Crisp relations defined by tables.
+ */ parcelHelpers.export(exports, "createCrispTabledRelation", ()=>createCrispTabledRelation);
+/**
+ * Fuzzy relations defined by tables.
+ */ parcelHelpers.export(exports, "createFuzzyTabledRelation", ()=>createFuzzyTabledRelation);
+// -----------------------------------------------------------------------------
+parcelHelpers.export(exports, "createCrispFuzzyRelation", ()=>createCrispFuzzyRelation);
+function createCrispTabledRelation(elms, doms) {
+    const es = [
+        ...elms
+    ];
+    const ds = [
+        ...doms
+    ];
+    const ms = new Array(doms.length);
+    let m = 1;
+    for(let i = ms.length - 1; i >= 0; --i){
+        ms[i] = m;
+        m *= ds[i].size();
+    }
+    return (...vs)=>{
+        if (ms.length !== vs.length) throw new RangeError();
+        let index = 0;
+        for(let i = 0; i < ms.length; ++i)index += ms[i] * ds[i].indexOf(vs[i]);
+        return es[index];
+    };
+}
+function createFuzzyTabledRelation(elms, doms) {
+    const es = [
+        ...elms
+    ];
+    const ds = [
+        ...doms
+    ];
+    const ms = new Array(doms.length);
+    let m = 1;
+    for(let i = ms.length - 1; i >= 0; --i){
+        ms[i] = m;
+        m *= ds[i].size();
+    }
+    return (...vs)=>{
+        if (ms.length !== vs.length) throw new RangeError();
+        let index = 0;
+        for(let i = 0; i < ms.length; ++i)index += ms[i] * ds[i].indexOf(vs[i]);
+        return es[index];
+    };
+}
+function createCrispFuzzyRelation(fn, th) {
+    return (...vs)=>{
+        const d = fn(...vs);
+        return 0 < d && d < th ? 0 : d;
+    };
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"JK6En":[function(require,module,exports,__globalThis) {
+/**
+ * Class implements a solver using the breakout method for fuzzy CSP.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-22
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "FuzzyBreakout", ()=>FuzzyBreakout);
+var _assignmentList = require("../misc/assignment-list");
+var _solver = require("../solver");
+class FuzzyBreakout extends (0, _solver.Solver) {
+    #isRandom;
+    #ws;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super(), this.#isRandom = true;
+    }
+    /**
+	 * Sets the randomness of the algorithm.
+	 * Enabling randomness reduces the risk of local solutions, but makes the solution unrepeatable.
+	 * @param flag Whether the randomness is enabled.
+	 */ setRandomness(flag) {
+        this.#isRandom = flag;
+    }
+    /**
+	 * {@override}
+	 */ name() {
+        return 'Fuzzy Breakout';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#ws = new Array(this.pro.constraintSize());
+        this.#ws.fill(1);
+        for (const x of this.pro.variables())if (x.isEmpty()) x.assign(x.domain().at(0));
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const defEv = this.pro.degree();
+        const sol = new (0, _assignmentList.AssignmentList)();
+        let solEv = defEv;
+        const canList = new (0, _assignmentList.AssignmentList)();
+        let ret = null;
+        while(true){
+            const [cs, ev] = this.pro.constraintsWithDegree();
+            this.monitor.outputDebugString(`Evaluation: ${ev}`);
+            if (solEv < ev) {
+                sol.setProblem(this.pro);
+                solEv = ev;
+                if (this.monitor.solutionFound(sol, solEv)) return true;
+            }
+            if (null !== (ret = this.monitor.check(ev))) break;
+            this.#next(cs, canList);
+        }
+        if (false === ret && !this.monitor.isTargetAssigned() && defEv < solEv) {
+            sol.apply();
+            ret = true;
+        }
+        return ret;
+    }
+    #next(cs, canList) {
+        this.#findCandidates(this.#listTargetVariables(cs), canList);
+        if (0 < canList.size()) {
+            const a = this.#isRandom ? canList.random() : canList.at(0);
+            a.apply();
+            canList.clear();
+            this.monitor.outputDebugString('\t' + a);
+        } else {
+            for (const c of cs)this.#ws[c.index()] += 1;
+            this.monitor.outputDebugString('Breakout');
+        }
+    }
+    #findCandidates(tarXs, canList) {
+        let maxDiff = 0;
+        for (const x of tarXs){
+            const x_v = x.value(); // Save the value
+            let nowEv = 0;
+            for (const c of x)nowEv += (1 - c.degree()) * this.#ws[c.index()];
+            out: for (const v of x.domain()){
+                if (x_v === v) continue;
+                x.assign(v);
+                let diff = nowEv;
+                for (const c of x){
+                    diff -= (1 - c.degree()) * this.#ws[c.index()];
+                    // If the improvement is less than the previous improvement, try the next variable.
+                    if (diff < maxDiff) continue out;
+                }
+                if (maxDiff < diff) {
+                    maxDiff = diff;
+                    canList.clear();
+                    canList.addVariable(x, v);
+                } else if (maxDiff !== 0) canList.addVariable(x, v);
+            }
+            x.assign(x_v); // Restore the value.
+        }
+    }
+    #listTargetVariables(tarCs) {
+        const xs = new Set();
+        for (const c of tarCs)for (const x of c)xs.add(x);
+        return Array.from(xs);
+    }
+}
+
+},{"../misc/assignment-list":"7XBf8","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6vCMZ":[function(require,module,exports,__globalThis) {
+/**
+ * This class implements the forward checking method for fuzzy CSPs.
+ * The minimum-remaining-values (MRV) heuristic can also be used by specifying the option.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "FuzzyForwardChecking", ()=>FuzzyForwardChecking);
+var _assignmentList = require("../misc/assignment-list");
+var _domainPruner = require("../misc/domain-pruner");
+var _problems = require("../../util/problems");
+var _solver = require("../solver");
+class FuzzyForwardChecking extends (0, _solver.Solver) {
+    #xs;
+    #rct;
+    #dps;
+    #sol;
+    #minDeg;
+    #globalRet;
+    #useMRV;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super(), this.#useMRV = true;
     }
     /**
 	 * Specify whether to use the minimum-remaining-values (MRV) heuristic.
@@ -5081,960 +4137,347 @@ $parcel$export($bbd1d315bf8940be$exports, "FuzzyForwardCheckingBc", ()=>$bbd1d31
         this.#useMRV = flag;
     }
     /**
-	 * If a solution is found and the search continues, it specifies how much the worst constraint satisfaction degree should be increased.
-	 * @param degree Increasing constraint satisfaction degree.
-	 */ setIncrementStepOfWorstSatisfactionDegree(degree) {
-        this.#degInc = degree;
-    }
-}
-var $3e67a3bbb2d0cdae$exports = {};
-$parcel$export($3e67a3bbb2d0cdae$exports, "FlexibleLocalChanges", ()=>$3e67a3bbb2d0cdae$export$c15ba88cf158f3d6);
-/**
- * A class that implements the flexible local changes method.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $3e67a3bbb2d0cdae$export$c15ba88cf158f3d6 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    static #setPlusSet(s13, s23) {
-        const sn = new Set(s13);
-        for (const v of s23)sn.add(v);
-        return sn;
-    }
-    static #setMinusSet(s112, s212) {
-        const sn = new Set(s112);
-        for (const v of s212)sn.delete(v);
-        return sn;
-    }
-    static #setPlusElement(s5, e3) {
-        const sn = new Set(s5);
-        sn.add(e3);
-        return sn;
-    }
-    static #setMinusElement(s32, e12) {
-        const sn = new Set(s32);
-        sn.delete(e12);
-        return sn;
-    }
-    #lt;
-    #lb;
-    #iterCount;
-    #endTime;
-    #globalReturn;
-    constructor(p){
-        super(p);
-        this.#computeHighestAndLowestConsistencyDegree();
-    }
-    name() {
-        return "Flexible Local Changes";
-    }
-    #choose(x2, cr) {
-        const res = new Map();
-        for (const c1 of cr){
-            if (!c1.isDefined()) continue;
-            for (const v of c1)if (!res.has(v)) res.set(v, 1);
-            else res.set(v, res.get(v) + 1);
-        }
-        const vs = [
-            ...x2
-        ];
-        vs.sort((o1, o2)=>{
-            let res1 = 0;
-            let res2 = 0;
-            if (res.has(o1)) res1 = res.get(o1);
-            if (res.has(o2)) res2 = res.get(o2);
-            if (res1 < res2) return 1;
-            if (res1 > res2) return -1;
-            return 0;
-        });
-        const ret = new Set();
-        for (const v of vs){
-            let remain = false;
-            for (const c1 of cr)if (c1.isDefined()) {
-                remain = true;
-                break;
-            }
-            if (!remain) break;
-            v.clear();
-            ret.add(v);
-        }
-        return ret;
-    }
-    #computeHighestAndLowestConsistencyDegree() {
-        let low = 1;
-        let high = 0;
-        for (const v of this._pro.variables())for (const c1 of v){
-            const l = c1.lowestConsistencyDegree();
-            const h = c1.highestConsistencyDegree();
-            if (l < low) low = l;
-            if (h > high) high = h;
-        }
-        this.#lb = low;
-        this.#lt = high;
-    }
-    #flcRepair(X1, X2, xi, consX1xi, consX12, cr1, rc) {
-        const X3p = this.#choose(X2, cr1);
-        const X1p = $3e67a3bbb2d0cdae$export$c15ba88cf158f3d6.#setPlusElement(X1, xi);
-        const X2p = $3e67a3bbb2d0cdae$export$c15ba88cf158f3d6.#setMinusSet(X2, X3p);
-        return this.#flcVariables(X1p, X2p, X3p, consX1xi, Math.min(consX12, consX1xi), rc);
-    }
-    #flcVariable(X11, X21, xi1, consX1, consX121, rc1) {
-        let bestCons = this.#lb;
-        if (xi1.domain().size() === 0) return bestCons;
-        let bestX2 = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X21);
-        let bestDij = xi1.domain().at(0);
-        const x2Store = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X21);
-        for(let j = 0; j < xi1.domain().size() && bestCons < consX121; ++j){
-            const dij = xi1.domain().at(j);
-            xi1.assign(dij);
-            const consX1_xi = Math.min(consX1, this.#testX1(X11, xi1, bestCons, rc1));
-            if (consX1_xi > Math.max(bestCons, rc1)) {
-                const crNew = new Set();
-                const consX12_xi = Math.min(Math.min(consX1_xi, consX121), this.#testX12(X11, X21, xi1, consX1_xi, consX121, crNew));
-                if (consX12_xi > bestCons) {
-                    bestCons = consX12_xi;
-                    bestDij = dij;
-                    bestX2 = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X21);
-                }
-                if (crNew.size) {
-                    const repairCons = this.#flcRepair(X11, X21, xi1, consX1_xi, consX121, crNew, Math.max(rc1, bestCons));
-                    if (this.#globalReturn !== -1) return bestCons;
-                    if (repairCons > bestCons) {
-                        bestCons = repairCons;
-                        bestDij = dij;
-                        bestX2 = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X21);
-                    }
-                    x2Store.apply();
-                }
-            }
-        }
-        bestX2.apply();
-        xi1.assign(bestDij);
-        return bestCons;
-    }
-    #flcVariables(X12, X22, X3, consX11, consX122, rc2) {
-        this._debugOutput(`X1 ${X12.size}, X2' ${X22.size}, X3' ${X3.size}`);
-        if (this._targetDeg !== null && this._targetDeg <= this._pro.worstSatisfactionDegree()) {
-            this._debugOutput("stop: current degree is above the target");
-            this.#globalReturn = 1;
-            return consX122;
-        }
-        if (this._iterLimit && this._iterLimit < this.#iterCount++) {
-            this._debugOutput("stop: number of iterations has reached the limit");
-            this.#globalReturn = 0;
-            return consX122;
-        }
-        if (this.#endTime < Date.now()) {
-            this._debugOutput("stop: time limit has been reached");
-            this.#globalReturn = 0;
-            return consX122;
-        }
-        if (X3.size === 0) return consX122;
-        const xi = X3.values().next().value;
-        const consX12xi = this.#flcVariable(X12, X22, xi, consX11, consX122, rc2);
-        if (this.#globalReturn !== -1) return consX122;
-        if (consX12xi < rc2) return this.#lb;
-        X22 = $3e67a3bbb2d0cdae$export$c15ba88cf158f3d6.#setPlusElement(X22, xi);
-        X3 = $3e67a3bbb2d0cdae$export$c15ba88cf158f3d6.#setMinusElement(X3, xi);
-        return this.#flcVariables(X12, X22, X3, consX11, consX12xi, rc2);
-    }
-    #initTest(X, cr2) {
-        const cs = new Set();
-        for (const v of X)for (const c1 of v)cs.add(c1); // All variables in X have been assigned.
-        let ret = 1;
-        for (const c1 of cs){
-            const sd = c1.satisfactionDegree();
-            if (sd === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) continue;
-            if (sd < ret) ret = sd;
-        }
-        for (const c1 of this._pro.constraints()){
-            const cd = c1.lowestConsistencyDegree();
-            if (cd < this.#lt) cr2.add(c1);
-        }
-        return ret;
-    }
-    #testX1(X13, xi2, bestCons, rc3) {
-        let cd = 1;
-        const cs = new Set();
-        for (const v of X13){
-            const temp = this._pro.constraintsBetween(v, xi2);
-            for (const c1 of temp)cs.add(c1);
-        }
-        for (const c1 of cs){
-            const d = c1.satisfactionDegree();
-            if (d === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) continue;
-            if (d < cd) cd = d;
-            if (cd <= bestCons || cd <= rc3) return cd; // If it is determined that a better solution than the current solution cannot be obtained
-        }
-        return cd;
-    }
-    #testX12(X14, X23, xi3, consX1xi1, consX123, cr3) {
-        let csd = 1;
-        const cs = new Set();
-        for (const v of X14){
-            const temp = this._pro.constraintsBetween(v, xi3);
-            for (const c1 of temp)cs.add(c1);
-        }
-        for (const v of X23){
-            const temp = this._pro.constraintsBetween(v, xi3);
-            for (const c1 of temp)cs.add(c1);
-        }
-        for (const c1 of cs){
-            const sd = c1.satisfactionDegree();
-            if (sd === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) continue;
-            if (sd < csd) csd = sd;
-        }
-        for (const c1 of cs){
-            const sd = c1.satisfactionDegree();
-            if (sd === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) continue;
-            if (sd < consX1xi1 || sd < consX123) cr3.add(c1);
-        }
-        return csd;
-    }
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        this.#globalReturn = -1;
-        const wsd = this._pro.worstSatisfactionDegree();
-        if (this._pro.emptyVariableSize() === 0) this._pro.clearAllVariables();
-        const X1 = new Set();
-        const X2 = new Set(); // Currently assigned variables.
-        const X3 = new Set(); // Currently unassigned variables.
-        for (const v of this._pro.variables())(!v.isEmpty() ? X2 : X3).add(v);
-        const cr = new Set();
-        const initCons = this.#initTest(X2, cr);
-        let rc;
-        let initSol = null;
-        if (X3.size === 0) {
-            rc = initCons;
-            initSol = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X2);
-        } else rc = this.#lb;
-        const X3p = $3e67a3bbb2d0cdae$export$c15ba88cf158f3d6.#setPlusSet(this.#choose(X2, cr), X3);
-        const X2p = $3e67a3bbb2d0cdae$export$c15ba88cf158f3d6.#setMinusSet(X2, X3p);
-        let result = this.#flcVariables(X1, X2p, X3p, this.#lt, this.#lt, rc);
-        if (result < rc) {
-            if (initSol !== null) initSol.apply();
-        }
-        result = this._pro.worstSatisfactionDegree();
-        return result > wsd && result > 0 && (this.#globalReturn !== 0 || this._targetDeg === null);
-    }
-}
-var $a2b0456b598cdc15$exports = {};
-$parcel$export($a2b0456b598cdc15$exports, "FlexibleLocalChangesEx", ()=>$a2b0456b598cdc15$export$f3429dcb0286bfee);
-/**
- * A class that implements the flexible local changes method.
- * The implementation is optimized by converting recursive calls to loops.
- *
- * @author Takuto Yanagida
- * @version 2023-04-11
- */ class $a2b0456b598cdc15$export$f3429dcb0286bfee extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    static #setPlusSet(s14, s24) {
-        const sn = new Set(s14);
-        for (const v of s24)sn.add(v);
-        return sn;
-    }
-    static #setMinusSet(s113, s213) {
-        const sn = new Set(s113);
-        for (const v of s213)sn.delete(v);
-        return sn;
-    }
-    static #setPlusElement(s6, e4) {
-        const sn = new Set(s6);
-        sn.add(e4);
-        return sn;
-    }
-    #lt;
-    #lb;
-    #iterCount;
-    #endTime;
-    #globalReturn;
-    constructor(p){
-        super(p);
-        this.#computeHighestAndLowestConsistencyDegree();
-    }
-    name() {
-        return "Flexible Local Changes Ex";
-    }
-    #choose(x21, cr4) {
-        const res = new Map();
-        for (const c1 of cr4){
-            if (!c1.isDefined()) continue;
-            for (const v of c1)if (!res.has(v)) res.set(v, 1);
-            else res.set(v, res.get(v) + 1);
-        }
-        const vs = [
-            ...x21
-        ];
-        vs.sort((o1, o2)=>{
-            let res1 = 0;
-            let res2 = 0;
-            if (res.has(o1)) res1 = res.get(o1);
-            if (res.has(o2)) res2 = res.get(o2);
-            if (res1 < res2) return 1;
-            if (res1 > res2) return -1;
-            return 0;
-        });
-        const ret = new Set();
-        for (const v of vs){
-            let remain = false;
-            for (const c1 of cr4)if (c1.isDefined()) {
-                remain = true;
-                break;
-            }
-            if (!remain) break;
-            v.clear();
-            ret.add(v);
-        }
-        return ret;
-    }
-    #computeHighestAndLowestConsistencyDegree() {
-        let low = 1;
-        let high = 0;
-        for (const v of this._pro.variables())for (const c1 of v){
-            const l = c1.lowestConsistencyDegree();
-            const h = c1.highestConsistencyDegree();
-            if (l < low) low = l;
-            if (h > high) high = h;
-        }
-        this.#lb = low;
-        this.#lt = high;
-    }
-    #flcRepair(X15, X24, xi4, consX1xi2, consX124, cr11, rc4) {
-        const X3p = this.#choose(X24, cr11);
-        const X1p = $a2b0456b598cdc15$export$f3429dcb0286bfee.#setPlusElement(X15, xi4);
-        const X2p = $a2b0456b598cdc15$export$f3429dcb0286bfee.#setMinusSet(X24, X3p);
-        return this.#flcVariables(X1p, X2p, X3p, consX1xi2, Math.min(consX124, consX1xi2), rc4);
-    }
-    #flcVariable(X111, X211, xi11, consX13, consX1211, rc11) {
-        let bestCons = this.#lb;
-        if (xi11.domain().size() === 0) return bestCons;
-        let bestX2 = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X211);
-        let bestDij = xi11.domain().at(0);
-        const x2Store = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X211);
-        for(let j = 0; j < xi11.domain().size() && bestCons < consX1211; ++j){
-            const dij = xi11.domain().at(j);
-            xi11.assign(dij);
-            const consX1_xi = Math.min(consX13, this.#testX1(X111, xi11, bestCons, rc11));
-            if (consX1_xi > Math.max(bestCons, rc11)) {
-                const crNew = new Set();
-                const consX12_xi = Math.min(Math.min(consX1_xi, consX1211), this.#testX12(X111, X211, xi11, consX1_xi, consX1211, crNew));
-                if (consX12_xi > bestCons) {
-                    bestCons = consX12_xi;
-                    bestDij = dij;
-                    bestX2 = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X211);
-                }
-                if (crNew.size) {
-                    const repairCons = this.#flcRepair(X111, X211, xi11, consX1_xi, consX1211, crNew, Math.max(rc11, bestCons));
-                    if (this.#globalReturn !== -1) return bestCons;
-                    if (repairCons > bestCons) {
-                        bestCons = repairCons;
-                        bestDij = dij;
-                        bestX2 = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X211);
-                    }
-                    x2Store.apply();
-                }
-            }
-        }
-        bestX2.apply();
-        xi11.assign(bestDij);
-        return bestCons;
-    }
-    #flcVariables(X121, X221, X31, consX111, consX1221, rc21) {
-        X221 = new Set(X221); // Clone
-        X31 = new Set(X31); // Clone
-        while(true){
-            this._debugOutput(`X1 ${X121.size}, X2' ${X221.size}, X3' ${X31.size}`);
-            if (this._targetDeg !== null && this._targetDeg <= this._pro.worstSatisfactionDegree()) {
-                this._debugOutput("stop: current degree is above the target");
-                this.#globalReturn = 1;
-                return consX1221;
-            }
-            if (this._iterLimit && this._iterLimit < this.#iterCount++) {
-                this._debugOutput("stop: number of iterations has reached the limit");
-                this.#globalReturn = 0;
-                return consX1221;
-            }
-            if (this.#endTime < Date.now()) {
-                this._debugOutput("stop: time limit has been reached");
-                this.#globalReturn = 0;
-                return consX1221;
-            }
-            if (X31.size === 0) return consX1221;
-            const xi = X31.values().next().value;
-            const consX12xi = this.#flcVariable(X121, X221, xi, consX111, consX1221, rc21);
-            if (this.#globalReturn !== -1) return consX1221;
-            if (consX12xi < rc21) return this.#lb;
-            X221.add(xi);
-            X31.delete(xi);
-            consX1221 = consX12xi;
-        }
-    }
-    #initTest(X4, cr21) {
-        const cs = new Set();
-        for (const v of X4)for (const c1 of v)cs.add(c1); // All variables in X have been assigned.
-        let ret = 1;
-        for (const c1 of cs){
-            const sd = c1.satisfactionDegree();
-            if (sd === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) continue;
-            if (sd < ret) ret = sd;
-        }
-        for (const c1 of this._pro.constraints()){
-            const cd = c1.lowestConsistencyDegree();
-            if (cd < this.#lt) cr21.add(c1);
-        }
-        return ret;
-    }
-    #testX1(X131, xi21, bestCons1, rc31) {
-        let cd = 1;
-        const cs = new Set();
-        for (const v of X131){
-            const temp = this._pro.constraintsBetween(v, xi21);
-            for (const c1 of temp)cs.add(c1);
-        }
-        for (const c1 of cs){
-            const d = c1.satisfactionDegree();
-            if (d === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) continue;
-            if (d < cd) cd = d;
-            if (cd <= bestCons1 || cd <= rc31) return cd; // If it is determined that a better solution than the current solution cannot be obtained
-        }
-        return cd;
-    }
-    #testX12(X141, X231, xi31, consX1xi11, consX1231, cr31) {
-        let csd = 1;
-        const cs = new Set();
-        for (const v of X141){
-            const temp = this._pro.constraintsBetween(v, xi31);
-            for (const c1 of temp)cs.add(c1);
-        }
-        for (const v of X231){
-            const temp = this._pro.constraintsBetween(v, xi31);
-            for (const c1 of temp)cs.add(c1);
-        }
-        for (const c1 of cs){
-            const sd = c1.satisfactionDegree();
-            if (sd === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) continue;
-            if (sd < csd) csd = sd;
-        }
-        for (const c1 of cs){
-            const sd = c1.satisfactionDegree();
-            if (sd === $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED) continue;
-            if (sd < consX1xi11 || sd < consX1231) cr31.add(c1);
-        }
-        return csd;
-    }
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        this.#globalReturn = -1;
-        const wsd = this._pro.worstSatisfactionDegree();
-        if (this._pro.emptyVariableSize() === 0) this._pro.clearAllVariables();
-        const X1 = new Set();
-        const X2 = new Set(); // Currently assigned variables.
-        const X3 = new Set(); // Currently unassigned variables.
-        for (const v of this._pro.variables())(!v.isEmpty() ? X2 : X3).add(v);
-        const cr = new Set();
-        const initCons = this.#initTest(X2, cr);
-        let rc;
-        let initSol = null;
-        if (X3.size === 0) {
-            rc = initCons;
-            initSol = $d7051a715721e7ce$export$1d4e454bcd46f18f.fromVariables(X2);
-        } else rc = this.#lb;
-        const X3p = $a2b0456b598cdc15$export$f3429dcb0286bfee.#setPlusSet(this.#choose(X2, cr), X3);
-        const X2p = $a2b0456b598cdc15$export$f3429dcb0286bfee.#setMinusSet(X2, X3p);
-        let result = this.#flcVariables(X1, X2p, X3p, this.#lt, this.#lt, rc);
-        if (result < rc) {
-            if (initSol !== null) initSol.apply();
-        }
-        result = this._pro.worstSatisfactionDegree();
-        return result > wsd && result > 0 && (this.#globalReturn !== 0 || this._targetDeg === null);
-    }
-}
-var $d7c197e6a4ef7b17$exports = {};
-$parcel$export($d7c197e6a4ef7b17$exports, "FuzzyBreakout", ()=>$d7c197e6a4ef7b17$export$151ca5d788220218);
-/**
- * Class implements a solver using the breakout method for fuzzy CSP.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $d7c197e6a4ef7b17$export$151ca5d788220218 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    #weights;
-    #lastSolDeg;
-    #isRandom = true;
-    constructor(p){
-        super(p);
-        this.#weights = new Array(this._pro.constraintSize());
-        this.#weights.fill(1);
-    }
-    name() {
-        return "Fuzzy Breakout";
-    }
-    foundSolution() {
-        return false;
-    }
-    #findCandidates(worstVars, canList1) {
-        let maxDiff = 0;
-        for (const v of worstVars){
-            const v_val = v.value(); // Save the value
-            let nowVio = 0;
-            for (const c1 of v)nowVio += (1 - c1.satisfactionDegree()) * this.#weights[c1.index()];
-            out: for (const d of v.domain()){
-                if (v_val === d) continue;
-                v.assign(d);
-                let diff = nowVio;
-                for (const c1 of v){
-                    diff -= (1 - c1.satisfactionDegree()) * this.#weights[c1.index()];
-                    // If the improvement is less than the previous improvement, try the next variable.
-                    if (diff < maxDiff) continue out;
-                }
-                if (diff > maxDiff) {
-                    maxDiff = diff;
-                    canList1.clear();
-                    canList1.addVariable(v, d);
-                } else if (maxDiff !== 0) canList1.addVariable(v, d);
-            }
-            v.assign(v_val); // Restore the value.
-        }
-    }
-    #listWorstVariables(worstCons) {
-        const wvs = new Set();
-        for (const c1 of worstCons)for (const v of c1)wvs.add(v);
-        return Array.from(wvs);
-    }
-    exec() {
-        const endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        let iterCount = 0;
-        for (const v of this._pro.variables())if (v.isEmpty()) v.assign(v.domain().at(0));
-        const deg = this._pro.worstSatisfactionDegree();
-        const canList = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        const sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        while(true){
-            const [vc, wsd] = this._pro.constraintsWithWorstSatisfactionDegree();
-            if (this._targetDeg !== null && this._targetDeg <= wsd) {
-                this._debugOutput("stop: current degree is above the target");
-                return true;
-            }
-            if (this._iterLimit && this._iterLimit < iterCount++) {
-                this._debugOutput("stop: number of iterations has reached the limit");
-                break;
-            }
-            if (endTime < Date.now()) {
-                this._debugOutput("stop: time limit has been reached");
-                break;
-            }
-            this._debugOutput("worst satisfaction degree: " + wsd);
-            if (this.#lastSolDeg < wsd) {
-                sol.setProblem(this._pro);
-                this.#lastSolDeg = wsd;
-                if (foundSolution(sol, this.#lastSolDeg)) return true;
-            }
-            this.#findCandidates(this.#listWorstVariables(vc), canList);
-            if (0 < canList.size()) {
-                const e = this.#isRandom ? canList.random() : canList.at(0);
-                e.apply();
-                canList.clear();
-                this._debugOutput("	" + e);
-            } else {
-                for (const c1 of vc)this.#weights[c1.index()] += 1;
-                this._debugOutput("breakout");
-            }
-        }
-        if (this._targetDeg === null && deg < this._pro.worstSatisfactionDegree()) return true;
-        return false;
+	 * {@override}
+	 */ name() {
+        return 'Fuzzy Forward Checking';
     }
     /**
-	 * Sets the randomness of the algorithm.
-	 * Enabling randomness reduces the risk of local solutions, but makes the solution unrepeatable.
-	 * @param flag Whether the randomness is enabled.
-	 */ setRandomness(flag) {
-        this.#isRandom = flag;
+	 * {@override}
+	 */ preprocess() {
+        this.#xs = [
+            ...this.pro.variables()
+        ];
+        this.#rct = (0, _problems.createRelatedConstraintTable)(this.pro, this.#xs);
+        this.#dps = Array.from(this.#xs, (x)=>new (0, _domainPruner.DomainPruner)(x.domain().size()));
+        this.#sol = new (0, _assignmentList.AssignmentList)();
+        this.#minDeg = 0;
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        let ret = null;
+        while(ret === null){
+            this.#globalRet = false;
+            this.pro.clearAllVariables();
+            ret = this.#branch(0);
+            this.#sol.apply();
+        }
+        return ret === true;
+    }
+    #branch(level, curDeg = 1) {
+        if (level === this.pro.variableSize()) {
+            const ev = this.pro.degree();
+            this.#sol.setProblem(this.pro);
+            this.monitor.outputDebugString('\t' + `Evaluation ${ev}`);
+            if (this.#minDeg < ev) {
+                this.#minDeg = ev;
+                this.#globalRet = true;
+                if (this.monitor.solutionFound(this.#sol, ev)) return true; // Success.
+            }
+            return this.monitor.check(ev);
+        }
+        let ret = null;
+        if (null !== (ret = this.monitor.check())) return ret; // Success or failure.
+        const x = this.#xs[this.#useMRV ? (0, _domainPruner.indexOfVariableWithMRV)(this.#xs, this.#dps) : level];
+        const d = x.domain();
+        const dp = this.#dps[x.index()];
+        for(let i = 0, n = d.size(); i < n; ++i){
+            if (dp.isPruned(i)) continue;
+            x.assign(d.at(i));
+            const deg = Math.min(curDeg, this.#getWorstDegreeAround(x));
+            if (deg <= this.#minDeg) continue;
+            if (this.#checkForward(level, x)) {
+                ret = this.#branch(level + 1, deg);
+                if (null !== ret || this.#globalRet) break;
+            }
+            for (const dp of this.#dps)dp.recover(level);
+        }
+        if (ret === null) {
+            for (const dp of this.#dps)dp.recover(level);
+            x.clear();
+        }
+        return ret;
+    }
+    // Checks for possible assignment to a future variable from the current variable assignment.
+    #checkForward(level, x) {
+        for (const x_i of this.#xs){
+            if (!x_i.isEmpty()) continue; // If it is a past or present variable.
+            const cs = this.#getConstraintsBetween(x.index(), x_i.index());
+            const dp_i = this.#dps[x_i.index()];
+            const d_i = x_i.domain();
+            for (const c of cs){
+                if (c.emptySize() !== 1) continue;
+                if (!this.#checkForwardConsistency(level, x_i, d_i, dp_i, c)) return false;
+            }
+        }
+        return true;
+    }
+    // Retrieves an array of constraints from a table that caches constraints between two variables.
+    #getConstraintsBetween(i, j) {
+        return i < j ? this.#rct[j][i] : this.#rct[i][j];
+    }
+    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there is one unassigned variable in the scope of the constraint).
+    #checkForwardConsistency(level, x, d, dp, c) {
+        for(let i = 0, n = d.size(); i < n; ++i){
+            if (dp.isPruned(i)) continue;
+            x.assign(d.at(i));
+            if (c.degree() <= this.#minDeg) dp.prune(i, level);
+        }
+        x.clear();
+        return !dp.isEmpty(); // Failure if the domain of one of the future variables is empty.
+    }
+    // Find the number of constraint violations that have increased due to the current value of the variable x.
+    #getWorstDegreeAround(x) {
+        let min = Number.MAX_VALUE;
+        for (const c of x){
+            const ev = c.degree();
+            if (0 <= ev /* ev !== UNDEFINED */  && ev < min) min = ev;
+        }
+        return min;
     }
 }
-var $fb3cfe453725e4b3$exports = {};
-$parcel$export($fb3cfe453725e4b3$exports, "FuzzyGENET", ()=>$fb3cfe453725e4b3$export$6a3df005617df82a);
+
+},{"../misc/assignment-list":"7XBf8","../misc/domain-pruner":"9ljra","../../util/problems":"kAwtv","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ezeI0":[function(require,module,exports,__globalThis) {
 /**
  * This class implements fuzzy GENET.
  * CSPs and FCSPs (but only Binary (F)CSPs) is supported.
  *
  * @author Takuto Yanagida
- * @version 2023-04-17
- */ class $fb3cfe453725e4b3$export$6a3df005617df82a extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    static nextInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
-    }
-    #clusters = [];
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "FuzzyGENET", ()=>FuzzyGENET);
+var _assignmentList = require("../misc/assignment-list");
+var _random = require("../misc/random");
+var _solver = require("../solver");
+class FuzzyGENET extends (0, _solver.Solver) {
+    #clusters;
     #connections;
-    #worstSatisfactionDegree;
-    constructor(p, worstSatisfactionDegree = 1){
-        super(p);
-        this.#worstSatisfactionDegree = worstSatisfactionDegree;
+    #thDeg;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super();
     }
-    name() {
-        return "Fuzzy GENET";
+    /**
+	 * Sets a threshold.
+	 *
+	 * @param threshold A threshold
+	 */ setThreshold(threshold) {
+        this.#thDeg = threshold;
     }
-    #createNetwork(worstDeg) {
-        this._debugOutput("network creation start");
-        const cons = [];
-        for (const v of this._pro.variables()){
-            if (v.domain().size() === 0) return false;
-            this.#clusters.push(new $fb3cfe453725e4b3$export$6a3df005617df82a.Cluster(v));
+    /**
+	 * {@override}
+	 */ name() {
+        return 'Fuzzy GENET';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#clusters = [];
+        this.#connections = [];
+        this.#thDeg = 1;
+        if (!this.#createNetwork()) throw new Error();
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const order = [
+            ...Array(this.#clusters.length).keys()
+        ];
+        const defEv = this.pro.degree();
+        const sol = new (0, _assignmentList.AssignmentList)();
+        let solEv = defEv;
+        let ret = null;
+        while(true){
+            const ev = this.pro.degree();
+            this.monitor.outputDebugString(`Evaluation: ${ev}`);
+            if (solEv < ev) {
+                sol.setProblem(this.pro);
+                solEv = ev;
+                if (this.monitor.solutionFound(sol, solEv)) return true;
+            }
+            if (null !== (ret = this.monitor.check(ev))) break;
+            this.#next(order);
         }
-        for (const c1 of this._pro.constraints())if (c1.size() === 1) {
-            const v = c1.at(0);
-            const cl = this.#clusters[c1.at(0).index()];
-            for(let i = 0; i < cl.size(); ++i){
-                const origVal = v.value(); // Save the value.
-                v.assign(cl.get(i)._value);
-                if (c1.satisfactionDegree() <= worstDeg) cons.push(new $fb3cfe453725e4b3$export$6a3df005617df82a.Connection(c1, cl.get(i)));
-                v.assign(origVal); // Restore the value.
+        if (false === ret && !this.monitor.isTargetAssigned() && defEv < solEv) {
+            sol.apply();
+            ret = true;
+        }
+        return ret;
+    }
+    #createNetwork() {
+        this.monitor.outputDebugString('Start of Network Generation');
+        const cons = [];
+        for (const x of this.pro.variables()){
+            if (x.domain().size() === 0) return false;
+            this.#clusters.push(new Cluster(x));
+        }
+        for (const c of this.pro.constraints())if (c.size() === 1) {
+            const x = c.at(0);
+            const cl = this.#clusters[x.index()];
+            for (const n of cl){
+                const origV = x.value(); // Save the value.
+                x.assign(n._value);
+                if (c.degree() <= this.#thDeg) cons.push(new Connection(c, n));
+                x.assign(origV); // Restore the value.
             }
         } else {
-            const v1 = c1.at(0);
-            const v2 = c1.at(1);
-            const cl_f = this.#clusters[c1.at(0).index()];
-            const cl_s = this.#clusters[c1.at(1).index()];
-            for(let i = 0; i < cl_f.size(); ++i){
-                const origVal1 = v1.value(); // Save the value.
-                v1.assign(cl_f.get(i)._value);
-                for(let j = 0; j < cl_s.size(); ++j){
-                    const origVal2 = v2.value(); // Save the value.
-                    v2.assign(cl_s.get(j)._value);
-                    if (c1.satisfactionDegree() <= worstDeg) cons.push(new $fb3cfe453725e4b3$export$6a3df005617df82a.Connection(c1, cl_f.get(i), cl_s.get(j)));
-                    v2.assign(origVal2); // Restore the value.
+            const x1 = c.at(0);
+            const x2 = c.at(1);
+            const cl_f = this.#clusters[x1.index()];
+            const cl_s = this.#clusters[x2.index()];
+            for (const n_f of cl_f){
+                const origV1 = x1.value(); // Save the value.
+                x1.assign(n_f._value);
+                for (const n_s of cl_s){
+                    const origV2 = x2.value(); // Save the value.
+                    x2.assign(n_s._value);
+                    if (c.degree() <= this.#thDeg) cons.push(new Connection(c, n_f, n_s));
+                    x2.assign(origV2); // Restore the value.
                 }
-                v1.assign(origVal1); // Restore the value.
+                x1.assign(origV1); // Restore the value.
             }
         }
-        for (const cl of this.#clusters)for (const n of cl._neurons)n.lockConnections();
         this.#connections = cons;
-        this._debugOutput("network creation complete");
+        this.monitor.outputDebugString('End of Network Generation');
         return true;
     }
-    #shuffle(is1) {
-        for(let i = is1.length; i > 1; --i){
-            const j = $fb3cfe453725e4b3$export$6a3df005617df82a.nextInt(i);
-            const temp = is1[i - 1];
-            is1[i - 1] = is1[j];
-            is1[j] = temp;
-        }
-        return is1;
+    #next(order) {
+        let mod = false;
+        for (const i of this.#shuffle(order))if (this.#clusters[i].setActivityMaximumInput()) mod = true; // Turn on the node with the largest input in each cluster
+        if (!mod) {
+            for (const con of this.#connections)con.refreshWeight(); // Update weights for all connections
+            this.monitor.outputDebugString('\tRefresh weights');
+        } else for (const clu of this.#clusters)clu.applyToVariable();
     }
-    exec() {
-        if (!this.#createNetwork(this.#worstSatisfactionDegree)) throw new Exception();
-        const endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        let iterCount = 0;
-        const sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        const order = [];
-        for(let i = 0; i < this.#clusters.length; ++i)order.push(i);
-        let cur = this._pro.worstSatisfactionDegree();
-        let success = false;
-        while(true){
-            if (this._iterLimit && this._iterLimit < iterCount++) {
-                this._debugOutput("stop: number of iterations has reached the limit");
-                break;
-            }
-            if (endTime < Date.now()) {
-                this._debugOutput("stop: time limit has been reached");
-                break;
-            }
-            let modified = false;
-            for (const i of this.#shuffle(order))if (this.#clusters[i].setActivityMaximumInput()) modified = true; // Turn on the node with the largest input in each cluster
-            if (!modified) {
-                for (const con of this.#connections)con.refreshWeight(); // Update weights for all connections
-                continue;
-            } else {
-                for (const clu of this.#clusters)clu.applyToVariable(); // Apply to variable
-                const d = this._pro.worstSatisfactionDegree();
-                if (cur < d) {
-                    cur = d;
-                    this._debugOutput(`worst satisfaction degree: ${d}`);
-                    sol.setProblem(this._pro);
-                    if (this.foundSolution(sol, d)) {
-                        success = true;
-                        break;
-                    }
-                    if (this._targetDeg === null) success = true;
-                    else if (this._targetDeg <= cur) {
-                        this._debugOutput("stop: current degree is above the target");
-                        success = true;
-                        break;
-                    }
-                }
-            }
+    #shuffle(is) {
+        for(let i = is.length - 1; 0 < i; --i){
+            const j = (0, _random.rand)(i + 1);
+            [is[i], is[j]] = [
+                is[j],
+                is[i]
+            ];
         }
-        sol.apply();
-        return success;
+        return is;
     }
 }
-(()=>{
-    class Cluster {
-        static nextInt(max) {
-            return Math.floor(Math.random() * Math.floor(max));
-        }
-        #v;
-        #index;
-        #maxNeurons = [];
-        _neurons = [];
-        constructor(v){
-            this.#v = v;
-            for (const val of v.domain())this._neurons.push(new Neuron(val));
-            this.#setActivity(Cluster.nextInt(this._neurons.length));
-        }
-        #setActivity(index) {
-            for (const n of this._neurons)n._isActive = false;
-            this._neurons[index]._isActive = true;
-            this.#index = index;
-        }
-        applyToVariable() {
-            this.#v.assign(this._neurons[this.#index]._value);
-        }
-        get(index) {
-            return this._neurons[index];
-        }
-        neurons() {
-            return this._neurons;
-        }
-        // Turn on the node with the largest input.
-        setActivityMaximumInput() {
-            this.#maxNeurons.length = 0;
-            let max = Number.NEGATIVE_INFINITY;
-            let alreadyOn = false;
-            for(let i = 0; i < this._neurons.length; ++i){
-                const input = this._neurons[i].getInput();
-                if (max <= input) {
-                    if (max < input) {
-                        max = input;
-                        this.#maxNeurons.length = 0;
-                        alreadyOn = false;
-                    }
-                    this.#maxNeurons.push(i);
-                    if (this.#index === i) alreadyOn = true;
+class Cluster {
+    #x;
+    #index;
+    #maxNs;
+    constructor(x){
+        this.#index = 0;
+        this.#maxNs = [];
+        this._ns = [];
+        this.#x = x;
+        for (const v of x.domain())this._ns.push(new Neuron(v));
+        this.#setActivity((0, _random.rand)(this._ns.length));
+    }
+    #setActivity(index) {
+        for (const n of this._ns)n._isActive = false;
+        this._ns[index]._isActive = true;
+        this.#index = index;
+    }
+    applyToVariable() {
+        this.#x.assign(this._ns[this.#index]._value);
+    }
+    // Turn on the node with the largest input.
+    setActivityMaximumInput() {
+        this.#maxNs.length = 0;
+        let max = Number.NEGATIVE_INFINITY;
+        let alreadyOn = false;
+        for(let i = 0; i < this._ns.length; ++i){
+            const input = this._ns[i].getInput();
+            if (max <= input) {
+                if (max < input) {
+                    max = input;
+                    this.#maxNs.length = 0;
+                    alreadyOn = false;
                 }
-            }
-            if (alreadyOn || this.#maxNeurons.length === 0) return false;
-            this.#setActivity(this.#maxNeurons[Cluster.nextInt(this.#maxNeurons.length)]);
-            return true;
-        }
-        size() {
-            return this._neurons.length;
-        }
-    }
-    $fb3cfe453725e4b3$export$6a3df005617df82a.Cluster = Cluster;
-    class Connection {
-        #c;
-        #first;
-        #second;
-        _weight;
-        // Order of neurons must be the same as the order of variables that the constraint has.
-        constructor(c1, first, second = null){
-            this._weight = c1.satisfactionDegree() - 1;
-            this.#c = c1;
-            this.#first = first;
-            this.#first.addConnection(this);
-            this.#second = second;
-            if (this.#second !== null) this.#second.addConnection(this);
-        }
-        getNeuron(self) {
-            if (self === this.#first) return this.#second;
-            if (self === this.#second) return this.#first;
-            return null;
-        }
-        refreshWeight() {
-            if (!this.#first._isActive || this.#second !== null && !this.#second._isActive) return;
-            if (this.#c.size() === 1) this._weight += this.#c.fuzzyRelation().satisfactionDegree(this.#first._value) - 1;
-            else this._weight += this.#c.fuzzyRelation().satisfactionDegree(this.#first._value, this.#second._value) - 1;
-        }
-    }
-    $fb3cfe453725e4b3$export$6a3df005617df82a.Connection = Connection;
-    class Neuron {
-        #conTemp = [];
-        #connections;
-        _value;
-        _isActive = false;
-        constructor(value){
-            this._value = value;
-        }
-        addConnection(c1) {
-            this.#conTemp.push(c1);
-        }
-        lockConnections() {
-            this.#connections = [
-                ...this.#conTemp
-            ];
-            this.#conTemp = null; // No longer being used.
-        }
-        getInput() {
-            let ret = 0;
-            for (const c1 of this.#connections){
-                const n = c1.getNeuron(this); // If n is null, then the unary constraint.
-                ret += c1._weight * (n === null || n._isActive ? 1 : 0);
-            }
-            return ret;
-        }
-    }
-    $fb3cfe453725e4b3$export$6a3df005617df82a.Neuron = Neuron;
-})();
-var $e39b34bae78c1c37$exports = {};
-$parcel$export($e39b34bae78c1c37$exports, "SRS3", ()=>$e39b34bae78c1c37$export$4bfabca73d1ccb59);
-/**
- * This class implements the SRS algorithm.
- *
- * @author Takuto Yanagida
- * @version 2023-04-17
- */ class $e39b34bae78c1c37$export$4bfabca73d1ccb59 extends $e5625d8b51be59c8$export$cca492cadf45c096 {
-    // Threshold for adopting a candidate assignment at repair time (should be 0 if strictly following SRS 3)
-    static REPAIR_THRESHOLD = 0;
-    #closedList = new Set();
-    #openList = new Set();
-    #nodes = [];
-    #neighborConstraints = [];
-    #c_stars = new Set();
-    #iterCount;
-    #endTime;
-    #isRandom = true;
-    constructor(p){
-        super(p);
-        for (const c1 of this._pro.constraints()){
-            this.#nodes.push(new $e39b34bae78c1c37$export$4bfabca73d1ccb59.TreeNode(c1));
-            this.#neighborConstraints.push(null);
-        }
-    }
-    name() {
-        return "SRS 3";
-    }
-    foundSolution(solution, worstDegree) {
-        return false;
-    }
-    #getNeighborConstraints(c5) {
-        const index = c5.index();
-        if (this.#neighborConstraints[index] === null) this.#neighborConstraints[index] = c5.neighbors();
-        return this.#neighborConstraints[index];
-    }
-    #repair(c01) {
-        this._debugOutput("repair");
-        const canList = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        const minDeg0 = c01.satisfactionDegree(); // Target c0 should certainly be an improvement over this.
-        const min = this._pro.worstSatisfactionDegree(); // Lower bound of neighborhood constraints.
-        let maxDeg0 = c01.satisfactionDegree(); // Satisfaction degree of target c0 for the most improvement so far.
-        // If a candidate satisfying the condition is stronger than the previous candidates,
-        // it is replaced, and if no candidate is found until the end, it fails.
-        for (const v of c01){
-            const v_val = v.value(); // Save the value
-            out: for (const d of v.domain()){
-                if (v_val === d) continue;
-                v.assign(d);
-                const deg0 = c01.satisfactionDegree();
-                // If target c0 cannot be improved, the assignment is rejected.
-                if (minDeg0 > deg0 || maxDeg0 - deg0 > $e39b34bae78c1c37$export$4bfabca73d1ccb59.REPAIR_THRESHOLD) continue;
-                for (const c1 of v){
-                    if (c1 === c01) continue;
-                    const deg = c1.satisfactionDegree();
-                    // If one of the neighborhood constraints c is less than or equal to the worst, the assignment is rejected.
-                    if (deg !== $e67c82024f87a841$export$aec1359a0a40a615.UNDEFINED && deg < min) continue out;
-                }
-                if (deg0 > maxDeg0) {
-                    maxDeg0 = deg0;
-                    canList.clear();
-                }
-                canList.addVariable(v, d);
-            }
-            v.assign(v_val); // Restore the value
-        }
-        if (canList.size() > 0) {
-            const e = this.#isRandom ? canList.random() : canList.at(0);
-            e.apply();
-            this._debugOutput("	" + e);
-            return true;
-        }
-        return false;
-    }
-    #shrink(node2) {
-        this._debugOutput("shrink");
-        let removeCStar = false;
-        while(true){
-            node2 = node2.parent();
-            if (this.#c_stars.delete(node2)) {
-                removeCStar = true;
-                break;
-            }
-            if (!this.#repair(node2.parent().getObject())) break;
-        }
-        const temp = [];
-        node2.getDescendants(temp); // temp contains node.
-        for (const n of temp){
-            n.clear(); // Prepare for reuse
-            this.#openList.delete(n);
-            this.#closedList.delete(n);
-        }
-        if (!removeCStar) this.#openList.add(node2);
-    }
-    #spread(node11) {
-        this._debugOutput("spread");
-        this.#closedList.add(node11);
-        for (const c1 of this.#getNeighborConstraints(node11.getObject())){
-            const cn = this.#nodes[c1.index()];
-            if (!this.#closedList.has(cn) && !this.#openList.has(cn)) {
-                node11.add(cn);
-                this.#openList.add(cn);
+                this.#maxNs.push(i);
+                if (this.#index === i) alreadyOn = true;
             }
         }
-    }
-    #srs() {
-        this._debugOutput("srs");
-        const [wsdcs] = this._pro.constraintsWithWorstSatisfactionDegree();
-        for (const c1 of wsdcs){
-            const cn = this.#nodes[c1.index()];
-            cn.setParent(null);
-            this.#c_stars.add(cn);
-        }
-        this.#closedList.clear();
-        this.#openList.clear();
-        for (const n of this.#c_stars)this.#openList.add(n);
-        while(this.#c_stars.size && this.#openList.size){
-            if (this._iterLimit && this._iterLimit < this.#iterCount++) {
-                this._debugOutput("stop: number of iterations has reached the limit");
-                return false;
-            }
-            if (this.#endTime < Date.now()) {
-                this._debugOutput("stop: time limit has been reached");
-                return false;
-            }
-            const node = this.#openList.values().next().value;
-            this.#openList.delete(node);
-            if (this.#repair(node.getObject())) {
-                if (this.#c_stars.delete(node)) continue; // If the repaired node is included in C* (to be deleted)
-                if (this.#repair(node.parent().getObject())) {
-                    this.#shrink(node); // When its improvement leads to the improvement of its parents
-                    continue;
-                }
-            }
-            this.#spread(node);
-        }
+        if (alreadyOn || 0 === this.#maxNs.length) return false;
+        this.#setActivity(this.#maxNs[(0, _random.rand)(this.#maxNs.length)]);
         return true;
     }
-    exec() {
-        this.#endTime = this._timeLimit === null ? Number.MAX_VALUE : Date.now() + this._timeLimit;
-        this.#iterCount = 0;
-        if (this._targetDeg && this._targetDeg <= this._pro.worstSatisfactionDegree()) return true;
-        const sol = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        let success = false;
-        while(true){
-            const ret = this.#srs();
-            if (!ret || this.#c_stars.size) break;
-            const solutionWorstDeg = this._pro.worstSatisfactionDegree();
-            this._debugOutput(`\tfound a solution: ${solutionWorstDeg}\t${this._targetDeg}`);
-            sol.setProblem(this._pro);
-            if (this.foundSolution(sol, solutionWorstDeg)) {
-                success = true;
-                break;
-            }
-            if (this._targetDeg === null) success = true;
-            else if (this._targetDeg <= solutionWorstDeg) {
-                this._debugOutput("stop: current degree is above the target");
-                success = true;
-                break;
-            }
+    [Symbol.iterator]() {
+        return this._ns[Symbol.iterator]();
+    }
+}
+class Connection {
+    #c;
+    #n0;
+    #n1;
+    // Order of neurons must be the same as the order of variables that the constraint has.
+    constructor(c, first, second = null){
+        this.#c = c;
+        this.#n0 = first;
+        this.#n1 = second;
+        this._w = c.degree() - 1;
+        this.#n0.addConnection(this);
+        if (this.#n1) this.#n1.addConnection(this);
+    }
+    getNeuron(self) {
+        if (self === this.#n0) return this.#n1;
+        if (self === this.#n1) return this.#n0;
+        return null;
+    }
+    refreshWeight() {
+        if (!this.#n0._isActive || this.#n1 !== null && !this.#n1._isActive) return;
+        const r = this.#c.relation();
+        if (this.#c.size() === 1) this._w += r(this.#n0._value) - 1;
+        else this._w += r(this.#n0._value, this.#n1._value) - 1;
+    }
+}
+class Neuron {
+    #connections;
+    constructor(value){
+        this.#connections = [];
+        this._isActive = false // Direct reference (read, write) allowed.
+        ;
+        this._value = value;
+    }
+    addConnection(c) {
+        this.#connections.push(c);
+    }
+    getInput() {
+        let ret = 0;
+        for (const c of this.#connections){
+            const n = c.getNeuron(this); // If n is null, then the unary constraint.
+            ret += c._w * (n === null || n._isActive ? 1 : 0);
         }
-        return success;
+        return ret;
+    }
+}
+
+},{"../misc/assignment-list":"7XBf8","../misc/random":"5CZO5","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5QD09":[function(require,module,exports,__globalThis) {
+/**
+ * This class implements the SRS3 algorithm.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "SRS3", ()=>SRS3);
+var _assignmentList = require("../misc/assignment-list");
+var _random = require("../misc/random");
+var _solver = require("../solver");
+class SRS3 extends (0, _solver.Solver) {
+    #ws;
+    #closedList;
+    #openList;
+    #nodes;
+    #neighbors;
+    #isRandom;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super(), this.#isRandom = true;
     }
     /**
 	 * Sets the randomness of the algorithm.
@@ -6043,488 +4486,1404 @@ $parcel$export($e39b34bae78c1c37$exports, "SRS3", ()=>$e39b34bae78c1c37$export$4
 	 */ setRandomness(flag) {
         this.#isRandom = flag;
     }
-}
-{
-    class TreeNode {
-        #children = [];
-        #parent;
-        #obj;
-        constructor(obj){
-            this.#obj = obj;
+    /**
+	 * {@override}
+	 */ name() {
+        return 'SRS3';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#ws = new Array(this.pro.constraintSize());
+        this.#ws.fill(1);
+        this.#closedList = new Set();
+        this.#openList = new Set();
+        this.#nodes = [];
+        this.#neighbors = [];
+        for (const c of this.pro.constraints()){
+            this.#nodes.push(new TreeNode(c));
+            this.#neighbors.push(null);
         }
-        add(tn) {
-            tn.#parent = this;
-            this.#children.push(tn);
+        for (const x of this.pro.variables())if (x.isEmpty()) x.assign(x.domain().at(0));
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const defEv = this.pro.degree();
+        const sol = new (0, _assignmentList.AssignmentList)();
+        let solEv = defEv;
+        let ret = null;
+        while(true){
+            const [cs, ev] = this.pro.constraintsWithDegree();
+            this.monitor.outputDebugString(`Evaluation: ${ev}`);
+            if (solEv < ev) {
+                sol.setProblem(this.pro);
+                solEv = ev;
+                if (this.monitor.solutionFound(sol, solEv)) return true;
+            }
+            if (null !== (ret = this.monitor.check(ev))) break;
+            for (const tn of this.#nodes)tn.clear();
+            const c_stars = new Set();
+            for (const c of cs){
+                const tn = this.#nodes[c.index()];
+                c_stars.add(tn);
+            }
+            this.#srs(c_stars);
         }
-        clear() {
-            for (const tn of this.#children)tn.#parent = null;
-            this.#children.length = 0;
+        if (false === ret && !this.monitor.isTargetAssigned() && defEv < solEv) {
+            sol.apply();
+            ret = true;
         }
-        getDescendants(tns) {
-            tns.push(this);
-            for (const tn of this.#children)tn.getDescendants(tns);
+        return ret;
+    }
+    #srs(c_stars) {
+        this.monitor.outputDebugString('SRS');
+        this.#closedList.clear();
+        this.#openList.clear();
+        for (const tn of c_stars)this.#openList.add(tn);
+        while(c_stars.size && this.#openList.size){
+            const node = this.#getElementFromSet(this.#openList);
+            this.#openList.delete(node);
+            if (!this.#repair(node)) this.#spread(node);
+            else if (c_stars.delete(node)) ;
+            else if (node.parent() && this.#repair(node.parent())) this.#shrink(node, c_stars); // When its improvement leads to the improvement of its parents
+            else this.#spread(node);
         }
-        getObject() {
-            return this.#obj;
-        }
-        parent() {
-            return this.#parent;
-        }
-        setParent(p) {
-            this.#parent = p;
+        return 0 === c_stars.size;
+    }
+    #spread(tn) {
+        this.monitor.outputDebugString('Spread');
+        this.#closedList.add(tn);
+        for (const n of this.#getNeighbors(tn))// For constraints that are not included in Open or Closed.
+        if (!this.#closedList.has(n) && !this.#openList.has(n)) {
+            n.clear();
+            tn.append(n);
+            this.#openList.add(n);
         }
     }
-    $e39b34bae78c1c37$export$4bfabca73d1ccb59.TreeNode = TreeNode;
-}var $56dbbcaaa927a4a2$exports = {};
-$parcel$export($56dbbcaaa927a4a2$exports, "SRS3_PF", ()=>$56dbbcaaa927a4a2$export$281ed65cbb041503);
-/**
- * This class implements the SRS algorithm with PF.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ var $c5e681ea32920ad2$exports = {};
-$parcel$export($c5e681ea32920ad2$exports, "PostStabilization", ()=>$c5e681ea32920ad2$export$52631f16ca582d39);
-/**
- * Class of post-stabilization.
- *
- * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $c5e681ea32920ad2$export$52631f16ca582d39 {
-    static apply(p, orig) {
-        this._debugOutput("start post-stabilization");
-        let stabilized;
-        let count = 0;
-        do {
-            this._debugOutput("post-stabilization: count " + count++);
-            stabilized = false;
-            let C_min = p.worstSatisfactionDegree();
-            const vars = p.variables();
-            for(let i = 0; i < vars.length; ++i){
-                const v = vars[i];
-                const org = v.value();
-                const a = orig.get(i);
-                if (org === a.value()) continue;
-                a.apply(); // Try to assign the original.
-                if (p.worstSatisfactionDegree() >= C_min) stabilized = true;
-                else v.assign(org); // Restore.
+    #repair(tn) {
+        this.monitor.outputDebugString('Repair');
+        const c0 = tn.constraint();
+        let tn0 = tn;
+        do this.#ws[tn0.constraint().index()] += 1;
+        while (tn0 = tn0.parent());
+        const defEv0 = c0.degree(); // Target c0 should certainly be an improvement over this.
+        const canList = new (0, _assignmentList.AssignmentList)();
+        let maxDiff = 0;
+        for (const x of c0){
+            const x_v = x.value(); // Save the value
+            let nowEv = 0;
+            for (const c of x)nowEv += (1 - c.degree()) * this.#ws[c.index()];
+            out: for (const v of x.domain()){
+                if (x_v === v) continue;
+                x.assign(v);
+                if (c0.degree() <= defEv0) continue;
+                let diff = nowEv;
+                for (const c of x){
+                    diff -= (1 - c.degree()) * this.#ws[c.index()];
+                    // If the improvement is less than the previous improvement, try the next variable.
+                    if (diff < maxDiff) continue out;
+                }
+                if (maxDiff < diff) {
+                    maxDiff = diff;
+                    canList.clear();
+                    canList.addVariable(x, v);
+                } else if (maxDiff !== 0) canList.addVariable(x, v);
             }
-        }while (stabilized);
-        this._debugOutput("finish post-stabilization");
+            x.assign(x_v); // Restore the value
+        }
+        if (0 < canList.size()) {
+            const a = this.#isRandom ? canList.random() : canList.at(0);
+            a.apply();
+            this.monitor.outputDebugString('\t' + a);
+            return true;
+        }
+        return false;
+    }
+    #shrink(node, c_stars) {
+        this.monitor.outputDebugString('Shrink');
+        let cur = node;
+        let curIsRemoved = false;
+        while(true){
+            cur = cur.parent();
+            if (c_stars.delete(cur)) {
+                curIsRemoved = true;
+                break;
+            }
+            if (!cur.parent() || !this.#repair(cur.parent())) break;
+        }
+        const temp = [];
+        cur.getDescendants(temp); // temp contains node.
+        cur.clear(); // Prepare for reuse
+        for (const n of temp){
+            this.#openList.delete(n);
+            this.#closedList.delete(n);
+        }
+        if (!curIsRemoved) this.#openList.add(cur);
+    }
+    #getNeighbors(tn) {
+        const c = tn.constraint();
+        const i = c.index();
+        if (this.#neighbors[i] === null) {
+            const ns = [];
+            for (const d of c.neighbors())ns.push(this.#nodes[d.index()]);
+            this.#neighbors[i] = ns;
+        }
+        return this.#neighbors[i];
+    }
+    #getElementFromSet(set) {
+        const ms = this.#selectLightestNode(this.#selectNearestNode(set));
+        return this.#isRandom ? ms[(0, _random.rand)(ms.length)] : ms[0];
+    }
+    #selectLightestNode(set) {
+        let curW = Number.MAX_VALUE;
+        let ms = [];
+        for (const tn of set){
+            const w = this.#ws[tn.constraint().index()];
+            if (w < curW) {
+                curW = w;
+                ms.length = 0;
+                ms.push(tn);
+            } else if (w === curW) ms.push(tn);
+        }
+        return ms;
+    }
+    #selectNearestNode(set) {
+        let curD = Number.MAX_VALUE;
+        let ms = [];
+        for (const tn of set){
+            const d = tn.depth();
+            if (d < curD) {
+                curD = d;
+                ms.length = 0;
+                ms.push(tn);
+            } else if (d === curD) ms.push(tn);
+        }
+        return ms;
+    }
+}
+class TreeNode {
+    #c;
+    #depth;
+    #parent;
+    #children;
+    constructor(c){
+        this.#depth = 0;
+        this.#parent = null;
+        this.#children = [];
+        this.#c = c;
+    }
+    append(tn) {
+        tn.#parent = this;
+        tn.#depth = this.#depth + 1;
+        this.#children.push(tn);
+    }
+    clear() {
+        this.#parent = null;
+        this.#depth = 0;
+        for (const tn of this.#children)tn.clear();
+        this.#children.length = 0;
+    }
+    constraint() {
+        return this.#c;
+    }
+    depth() {
+        return this.#depth;
+    }
+    parent() {
+        return this.#parent;
+    }
+    getDescendants(tns) {
+        tns.push(this);
+        for (const tn of this.#children)tn.getDescendants(tns);
+    }
+}
+
+},{"../misc/assignment-list":"7XBf8","../misc/random":"5CZO5","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fSOIG":[function(require,module,exports,__globalThis) {
+/**
+ * Class implements a solver using the breakout method.
+ * Solves a problem as a maximum CSP.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Breakout", ()=>Breakout);
+var _assignmentList = require("../misc/assignment-list");
+var _solver = require("../solver");
+class Breakout extends (0, _solver.Solver) {
+    #isRandom;
+    #ws;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super(), this.#isRandom = true;
+    }
+    /**
+	 * Sets the randomness of the algorithm.
+	 * Enabling randomness reduces the risk of local solutions, but makes the solution unrepeatable.
+	 * @param flag Whether the randomness is enabled.
+	 */ setRandomness(flag) {
+        this.#isRandom = flag;
+    }
+    /**
+	 * {@override}
+	 */ name() {
+        return 'Breakout';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#ws = new Array(this.pro.constraintSize());
+        this.#ws.fill(1);
+        for (const x of this.pro.variables())if (x.isEmpty()) x.assign(x.domain().at(0));
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const defEv = this.pro.ratio();
+        const sol = new (0, _assignmentList.AssignmentList)();
+        let solEv = defEv;
+        const canList = new (0, _assignmentList.AssignmentList)();
+        let ret = null;
+        while(true){
+            const cs = this.pro.violatingConstraints();
+            const ev = this.pro.ratio();
+            this.monitor.outputDebugString(`Evaluation: ${ev}`);
+            if (solEv < ev) {
+                sol.setProblem(this.pro);
+                solEv = ev;
+                if (this.monitor.solutionFound(sol, solEv)) return true;
+            }
+            if (null !== (ret = this.monitor.check(ev))) break;
+            this.#next(cs, canList);
+        }
+        if (false === ret && !this.monitor.isTargetAssigned() && defEv < solEv) {
+            sol.apply();
+            ret = true;
+        }
+        return ret;
+    }
+    #next(cs, canList) {
+        this.#findCandidates(this.#listTargetVariables(cs), canList);
+        if (0 < canList.size()) {
+            const a = this.#isRandom ? canList.random() : canList.at(0);
+            a.apply();
+            canList.clear();
+            this.monitor.outputDebugString('\t' + a);
+        } else {
+            for (const c of cs)this.#ws[c.index()] += 1;
+            this.monitor.outputDebugString('Breakout');
+        }
+    }
+    #findCandidates(tarXs, canList) {
+        let maxDiff = 0;
+        for (const x of tarXs){
+            const x_v = x.value(); // Save the value
+            let nowEv = 0;
+            for (const c of x)nowEv += (1 - c.status()) * this.#ws[c.index()];
+            out: for (const v of x.domain()){
+                if (x_v === v) continue;
+                x.assign(v);
+                let diff = nowEv;
+                for (const c of x){
+                    diff -= (1 - c.status()) * this.#ws[c.index()];
+                    // If the improvement is less than the previous improvement, try the next variable.
+                    if (diff < maxDiff) continue out;
+                }
+                if (maxDiff < diff) {
+                    maxDiff = diff;
+                    canList.clear();
+                    canList.addVariable(x, v);
+                } else if (maxDiff !== 0) canList.addVariable(x, v);
+            }
+            x.assign(x_v); // Restore the value.
+        }
+    }
+    #listTargetVariables(tarCs) {
+        const xs = new Set();
+        for (const c of tarCs)for (const x of c)xs.add(x);
+        return Array.from(xs);
+    }
+}
+
+},{"../misc/assignment-list":"7XBf8","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gtT5Y":[function(require,module,exports,__globalThis) {
+/**
+ * This class implements the SRS3 algorithm for crisp CSP.
+ * The given crisp CSP is treated as the maximum CSP.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "CrispSRS3", ()=>CrispSRS3);
+var _assignmentList = require("../misc/assignment-list");
+var _random = require("../misc/random");
+var _solver = require("../solver");
+class CrispSRS3 extends (0, _solver.Solver) {
+    #ws;
+    #closedList;
+    #openList;
+    #nodes;
+    #neighbors;
+    #isRandom;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super(), this.#isRandom = true;
+    }
+    /**
+	 * Sets the randomness of the algorithm.
+	 * Enabling randomness reduces the risk of falling into a local solution, but makes the solution unrepeatable.
+	 * @param flag If true, randomness is enabled.
+	 */ setRandomness(flag) {
+        this.#isRandom = flag;
+    }
+    /**
+	 * {@override}
+	 */ name() {
+        return 'Crisp SRS3';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#ws = new Array(this.pro.constraintSize());
+        this.#ws.fill(1);
+        this.#closedList = new Set();
+        this.#openList = new Set();
+        this.#nodes = [];
+        this.#neighbors = [];
+        for (const c of this.pro.constraints()){
+            this.#nodes.push(new TreeNode(c));
+            this.#neighbors.push(null);
+        }
+        for (const x of this.pro.variables())if (x.isEmpty()) x.assign(x.domain().at(0));
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const defEv = this.pro.degree();
+        const sol = new (0, _assignmentList.AssignmentList)();
+        let solEv = defEv;
+        let ret = null;
+        while(true){
+            const cs = this.pro.violatingConstraints();
+            const ev = this.pro.ratio();
+            this.monitor.outputDebugString(`Evaluation: ${ev}`);
+            if (solEv < ev) {
+                sol.setProblem(this.pro);
+                solEv = ev;
+                if (this.monitor.solutionFound(sol, solEv)) return true;
+            }
+            if (null !== (ret = this.monitor.check(ev))) break;
+            for (const tn of this.#nodes)tn.clear();
+            const c_stars = new Set();
+            for (const c of cs){
+                const tn = this.#nodes[c.index()];
+                c_stars.add(tn);
+            }
+            this.#srs(c_stars);
+        }
+        if (false === ret && !this.monitor.isTargetAssigned() && defEv < solEv) {
+            sol.apply();
+            ret = true;
+        }
+        return ret;
+    }
+    #srs(c_stars) {
+        this.monitor.outputDebugString('SRS');
+        this.#closedList.clear();
+        this.#openList.clear();
+        for (const tn of c_stars)this.#openList.add(tn);
+        while(c_stars.size && this.#openList.size){
+            const node = this.#getElementFromSet(this.#openList);
+            this.#openList.delete(node);
+            if (!this.#repair(node)) this.#spread(node);
+            else if (c_stars.delete(node)) ;
+            else if (node.parent() && this.#repair(node.parent())) this.#shrink(node, c_stars); // When its improvement leads to the improvement of its parents
+            else this.#spread(node);
+        }
+        return 0 === c_stars.size;
+    }
+    #spread(tn) {
+        this.monitor.outputDebugString('Spread');
+        this.#closedList.add(tn);
+        for (const n of this.#getNeighbors(tn))// For constraints that are not included in Open or Closed.
+        if (!this.#closedList.has(n) && !this.#openList.has(n)) {
+            n.clear();
+            tn.append(n);
+            this.#openList.add(n);
+        }
+    }
+    #repair(tn) {
+        this.monitor.outputDebugString('Repair');
+        const c0 = tn.constraint();
+        let tn0 = tn;
+        do this.#ws[tn0.constraint().index()] += 1;
+        while (tn0 = tn0.parent());
+        const canList = new (0, _assignmentList.AssignmentList)();
+        let maxDiff = 0;
+        for (const x of c0){
+            const x_v = x.value(); // Save the value
+            let nowEv = 0;
+            for (const c of x)nowEv += (1 - c.status()) * this.#ws[c.index()];
+            out: for (const v of x.domain()){
+                if (x_v === v) continue;
+                x.assign(v);
+                if (c0.status() !== 1) continue;
+                let diff = nowEv;
+                for (const c of x){
+                    diff -= (1 - c.status()) * this.#ws[c.index()];
+                    // If the improvement is less than the previous improvement, try the next variable.
+                    if (diff < maxDiff) continue out;
+                }
+                if (maxDiff < diff) {
+                    maxDiff = diff;
+                    canList.clear();
+                    canList.addVariable(x, v);
+                } else if (maxDiff !== 0) canList.addVariable(x, v);
+            }
+            x.assign(x_v); // Restore the value
+        }
+        if (0 < canList.size()) {
+            const a = this.#isRandom ? canList.random() : canList.at(0);
+            a.apply();
+            this.monitor.outputDebugString('\t' + a);
+            return true;
+        }
+        return false;
+    }
+    #shrink(node, c_stars) {
+        this.monitor.outputDebugString('Shrink');
+        let cur = node;
+        let curIsRemoved = false;
+        while(true){
+            cur = cur.parent();
+            if (c_stars.delete(cur)) {
+                curIsRemoved = true;
+                break;
+            }
+            if (!cur.parent() || !this.#repair(cur.parent())) break;
+        }
+        const temp = [];
+        cur.getDescendants(temp); // temp contains node.
+        cur.clear(); // Prepare for reuse
+        for (const n of temp){
+            this.#openList.delete(n);
+            this.#closedList.delete(n);
+        }
+        if (!curIsRemoved) this.#openList.add(cur);
+    }
+    #getNeighbors(tn) {
+        const c = tn.constraint();
+        const i = c.index();
+        if (this.#neighbors[i] === null) {
+            const ns = [];
+            for (const d of c.neighbors())ns.push(this.#nodes[d.index()]);
+            this.#neighbors[i] = ns;
+        }
+        return this.#neighbors[i];
+    }
+    #getElementFromSet(set) {
+        const ms = this.#selectLightestNode(this.#selectNearestNode(set));
+        return this.#isRandom ? ms[(0, _random.rand)(ms.length)] : ms[0];
+    }
+    #selectLightestNode(set) {
+        let curW = Number.MAX_VALUE;
+        let ms = [];
+        for (const tn of set){
+            const w = this.#ws[tn.constraint().index()];
+            if (w < curW) {
+                curW = w;
+                ms.length = 0;
+                ms.push(tn);
+            } else if (w === curW) ms.push(tn);
+        }
+        return ms;
+    }
+    #selectNearestNode(set) {
+        let curD = Number.MAX_VALUE;
+        let ms = [];
+        for (const tn of set){
+            const d = tn.depth();
+            if (d < curD) {
+                curD = d;
+                ms.length = 0;
+                ms.push(tn);
+            } else if (d === curD) ms.push(tn);
+        }
+        return ms;
+    }
+}
+class TreeNode {
+    #c;
+    #depth;
+    #parent;
+    #children;
+    constructor(c){
+        this.#depth = 0;
+        this.#parent = null;
+        this.#children = [];
+        this.#c = c;
+    }
+    append(tn) {
+        tn.#parent = this;
+        tn.#depth = this.#depth + 1;
+        this.#children.push(tn);
+    }
+    clear() {
+        this.#parent = null;
+        this.#depth = 0;
+        for (const tn of this.#children)tn.clear();
+        this.#children.length = 0;
+    }
+    constraint() {
+        return this.#c;
+    }
+    depth() {
+        return this.#depth;
+    }
+    parent() {
+        return this.#parent;
+    }
+    getDescendants(tns) {
+        tns.push(this);
+        for (const tn of this.#children)tn.getDescendants(tns);
+    }
+}
+
+},{"../misc/assignment-list":"7XBf8","../misc/random":"5CZO5","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8meAj":[function(require,module,exports,__globalThis) {
+/**
+ * This class that implements the forward checking method.
+ * The minimum-remaining-values (MRV) heuristic can also be used by specifying the option.
+ * Searches for variable assignments that satisfy all constraints and fails if none are found.
+ * Each variable must have its own domain because it hides domain elements as branch pruning.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "ForwardChecking", ()=>ForwardChecking);
+var _assignmentList = require("../misc/assignment-list");
+var _domainPruner = require("../misc/domain-pruner");
+var _problems = require("../../util/problems");
+var _solver = require("../solver");
+class ForwardChecking extends (0, _solver.Solver) {
+    #xs;
+    #rct;
+    #dps;
+    #sol;
+    #useMRV;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super(), this.#useMRV = true;
+    }
+    /**
+	 * Specify whether to use the minimum-remaining-values (MRV) heuristic.
+	 * Use of MRV may increase processing time for some problems.
+	 * Default is false.
+	 * @param flag Use MRV if true.
+	 */ setUsingMinimumRemainingValuesHeuristics(flag) {
+        this.#useMRV = flag;
+    }
+    /**
+	 * {@override}
+	 */ name() {
+        return 'Forward Checking';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#xs = [
+            ...this.pro.variables()
+        ];
+        this.#rct = (0, _problems.createRelatedConstraintTable)(this.pro, this.#xs);
+        this.#dps = Array.from(this.#xs, (x)=>new (0, _domainPruner.DomainPruner)(x.domain().size()));
+        this.#sol = new (0, _assignmentList.AssignmentList)();
+        this.pro.clearAllVariables();
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const ret = this.#branch(0);
+        this.#sol.apply();
+        return ret === true;
+    }
+    #branch(level) {
+        if (level === this.pro.variableSize()) {
+            const ev = this.pro.ratio();
+            this.#sol.setProblem(this.pro);
+            this.monitor.outputDebugString('\t' + `Evaluation ${ev}`);
+            this.monitor.solutionFound(this.#sol, ev);
+            return true; // Success.
+        }
+        let ret = null;
+        if (null !== (ret = this.monitor.check())) return ret; // Success or failure.
+        const x = this.#xs[this.#useMRV ? (0, _domainPruner.indexOfVariableWithMRV)(this.#xs, this.#dps) : level];
+        const d = x.domain();
+        const dp = this.#dps[x.index()];
+        for(let i = 0, n = d.size(); i < n; ++i){
+            if (dp.isPruned(i)) continue;
+            x.assign(d.at(i));
+            const vc = this.#getViolationCountAround(x);
+            if (vc) continue;
+            if (this.#checkForward(level, x)) {
+                ret = this.#branch(level + 1);
+                if (null !== ret) break;
+            }
+            for (const dp of this.#dps)dp.recover(level);
+        }
+        if (ret === null) {
+            for (const dp of this.#dps)dp.recover(level);
+            x.clear();
+        }
+        return ret;
+    }
+    // Checks for possible assignment to a future variable from the current variable assignment.
+    #checkForward(level, x) {
+        for (const x_i of this.#xs){
+            if (!x_i.isEmpty()) continue; // If it is a past or present variable.
+            const cs = this.#getConstraintsBetween(x.index(), x_i.index());
+            const dp_i = this.#dps[x_i.index()];
+            const d_i = x_i.domain();
+            for (const c of cs){
+                if (c.emptySize() !== 1) continue;
+                if (!this.#checkForwardConsistency(level, x_i, d_i, dp_i, c)) return false;
+            }
+        }
         return true;
     }
-}
-class $56dbbcaaa927a4a2$export$281ed65cbb041503 extends $e39b34bae78c1c37$export$4bfabca73d1ccb59 {
-    constructor(p){
-        super(p);
+    // Retrieves an array of constraints from a table that caches constraints between two variables.
+    #getConstraintsBetween(i, j) {
+        return i < j ? this.#rct[j][i] : this.#rct[i][j];
     }
-    name() {
-        return "SRS 3 + PF";
-    }
-    exec() {
-        let deg = 0;
-        let uvs = 0;
-        if (this._debug) {
-            deg = this._pro.worstSatisfactionDegree();
-            uvs = this._pro.emptyVariableSize();
+    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there is one unassigned variable in the scope of the constraint).
+    #checkForwardConsistency(level, x, d, dp, c) {
+        for(let i = 0, n = d.size(); i < n; ++i){
+            if (dp.isPruned(i)) continue;
+            x.assign(d.at(i));
+            if (c.status() === 0) dp.prune(i, level);
         }
-        const al = new $d7051a715721e7ce$export$1d4e454bcd46f18f();
-        al.setProblem(this._pro);
-        const res = super.exec();
-        if (res) $c5e681ea32920ad2$export$52631f16ca582d39.apply(this._pro, al);
-        this._debugOutput(`result: ${res ? "success" : "failure"}`);
-        this._debugOutput(`satisfaction degree: ${deg} -> ${this._pro.worstSatisfactionDegree()}`);
-        this._debugOutput(`unassigned size: ${uvs} -> ${this._pro.emptyVariableSize()}`);
-        return res;
+        x.clear();
+        return !dp.isEmpty(); // Failure if the domain of one of the future variables is empty.
+    }
+    // Find the number of constraint violations that have increased due to the current value of the variable x.
+    #getViolationCountAround(x) {
+        let vc = 0;
+        for (const c of x)if (c.status() === 0) ++vc;
+        return vc;
     }
 }
-class $720d3cc47e3bd21f$export$4e442516b8f577ee {
-    static crispSolverNames() {
-        return [
-            /* 0 */ "Forward Checking",
-            /* 1 */ "Max Forward Checking",
-            /* 2 */ "Local Changes",
-            /* 3 */ "Local Changes Ex",
-            /* 4 */ "Breakout",
-            /* 5 */ "GENET",
-            /* 6 */ "Crisp SRS 3"
+
+},{"../misc/assignment-list":"7XBf8","../misc/domain-pruner":"9ljra","../../util/problems":"kAwtv","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bqKOq":[function(require,module,exports,__globalThis) {
+/**
+ * This class implements GENET.
+ * CSP (but only Binary CSP) is supported.
+ * Find the solution to the problem as the maximum CSP.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-24
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "GENET", ()=>GENET);
+var _assignmentList = require("../misc/assignment-list");
+var _random = require("../misc/random");
+var _solver = require("../solver");
+class GENET extends (0, _solver.Solver) {
+    #clusters;
+    #connections;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super();
+    }
+    /**
+	 * {@override}
+	 */ name() {
+        return 'GENET';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#clusters = [];
+        this.#connections = [];
+        if (!this.#createNetwork()) throw new Error();
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const order = [
+            ...Array(this.#clusters.length).keys()
         ];
-    }
-    static fuzzySolverNames() {
-        return [
-            /* 0 */ "Fuzzy Forward Checking",
-            /* 1 */ "Fuzzy Forward Checking Bc",
-            /* 2 */ "Flexible Local Changes",
-            /* 3 */ "Flexible Local Changes Ex",
-            /* 4 */ "Fuzzy Breakout",
-            /* 5 */ "Fuzzy GENET",
-            /* 6 */ "SRS 3",
-            /* 7 */ "SRS 3 PF"
-        ];
-    }
-    static async createSolver(type, p) {
-        const cs = await $720d3cc47e3bd21f$export$4e442516b8f577ee.createCrispSolver(type, p);
-        if (cs) return cs;
-        const fs = await $720d3cc47e3bd21f$export$4e442516b8f577ee.createFuzzySolver(type, p);
-        if (fs) return fs;
-        return null;
-    }
-    static async createCrispSolver(type, p) {
-        switch(type.replaceAll(" ", "")){
-            case "ForwardChecking":
-            case "forward-checking":
-                return new $6537b0e1551710d4$export$8570b7b487498488(p);
-            case "MaxForwardChecking":
-            case "max-forward-checking":
-                return new $0c5cdff78dc8648d$export$2a32484f7cb0d846(p);
-            case "LocalChanges":
-            case "local-changes":
-                return new $18724c3268ec037c$export$8153937ab18ca581(p);
-            case "LocalChangesEx":
-            case "local-changes-ex":
-                return new $16be001e34914685$export$e577c7182ffc977b(p);
-            case "Breakout":
-            case "breakout":
-                return new $368b031b41e29330$export$44de86bc32e07644(p);
-            case "GENET":
-            case "genet":
-                return new $59ba6be2773f89c9$export$d94917317b4f74cb(p);
-            case "CrispSRS3":
-            case "crisp-srs3":
-                return new $6a494cae60277c44$export$193930056f923a8(p);
+        const defEv = this.pro.ratio();
+        const sol = new (0, _assignmentList.AssignmentList)();
+        let solEv = defEv;
+        let ret = null;
+        while(true){
+            const ev = this.pro.ratio();
+            this.monitor.outputDebugString(`Evaluation: ${ev}`);
+            if (solEv < ev) {
+                sol.setProblem(this.pro);
+                solEv = ev;
+                if (this.monitor.solutionFound(sol, solEv)) return true;
+            }
+            if (null !== (ret = this.monitor.check(ev))) break;
+            this.#next(order);
         }
-        return null;
-    }
-    static async createFuzzySolver(type, p) {
-        switch(type.replaceAll(" ", "")){
-            case "FuzzyForwardChecking":
-            case "fuzzy-forward-checking":
-                return new $8d126dc1fb260d00$export$2d94cf9ddb103458(p);
-            case "FuzzyForwardCheckingBc":
-            case "fuzzy-forward-checking-bc":
-                return new $bbd1d315bf8940be$export$532d5536583284b8(p);
-            case "FlexibleLocalChanges":
-            case "flexible-local-changes":
-                return new $3e67a3bbb2d0cdae$export$c15ba88cf158f3d6(p);
-            case "FlexibleLocalChangesEx":
-            case "flexible-local-changes-ex":
-                return new $a2b0456b598cdc15$export$f3429dcb0286bfee(p);
-            case "FuzzyBreakout":
-            case "fuzzy-breakout":
-                return new $d7c197e6a4ef7b17$export$151ca5d788220218(p);
-            case "FuzzyGENET":
-            case "fuzzy-genet":
-                return new $fb3cfe453725e4b3$export$6a3df005617df82a(p);
-            case "SRS3":
-            case "srs3":
-                return new $e39b34bae78c1c37$export$4bfabca73d1ccb59(p);
-            case "SRS3PF":
-            case "SRS3_PF":
-            case "srs3-pf":
-                return new $56dbbcaaa927a4a2$export$281ed65cbb041503(p);
+        if (false === ret && !this.monitor.isTargetAssigned() && defEv < solEv) {
+            sol.apply();
+            ret = true;
         }
-        return null;
+        return ret;
+    }
+    #createNetwork() {
+        this.monitor.outputDebugString('Start of Network Generation');
+        const cons = [];
+        for (const x of this.pro.variables()){
+            if (x.domain().size() === 0) return false;
+            this.#clusters.push(new Cluster(x));
+        }
+        for (const c of this.pro.constraints())if (c.size() === 1) {
+            const x = c.at(0);
+            const cl = this.#clusters[x.index()];
+            for (const n of cl){
+                const origV = x.value(); // Save the value.
+                x.assign(n._value);
+                if (c.status() !== 1) cons.push(new Connection(c, n));
+                x.assign(origV); // Restore the value.
+            }
+        } else {
+            const x1 = c.at(0);
+            const x2 = c.at(1);
+            const cl_f = this.#clusters[x1.index()];
+            const cl_s = this.#clusters[x2.index()];
+            for (const n_f of cl_f){
+                const origV1 = x1.value(); // Save the value.
+                x1.assign(n_f._value);
+                for (const n_s of cl_s){
+                    const origV2 = x2.value(); // Save the value.
+                    x2.assign(n_s._value);
+                    if (c.status() !== 1) cons.push(new Connection(c, n_f, n_s));
+                    x2.assign(origV2); // Restore the value.
+                }
+                x1.assign(origV1); // Restore the value.
+            }
+        }
+        this.#connections = cons;
+        this.monitor.outputDebugString('End of Network Generation');
+        return true;
+    }
+    #next(order) {
+        let mod = false;
+        for (const i of this.#shuffle(order))if (this.#clusters[i].setActivityMaximumInput()) mod = true; // Turn on the node with the largest input in each cluster
+        if (!mod) {
+            for (const con of this.#connections)con.refreshWeight(); // Update weights for all connections
+            this.monitor.outputDebugString('\tRefresh weights');
+        } else for (const clu of this.#clusters)clu.applyToVariable();
+    }
+    #shuffle(is) {
+        for(let i = is.length - 1; 0 < i; --i){
+            const j = (0, _random.rand)(i + 1);
+            [is[i], is[j]] = [
+                is[j],
+                is[i]
+            ];
+        }
+        return is;
     }
 }
-var $d10fdff0b3f22a66$exports = {};
-$parcel$export($d10fdff0b3f22a66$exports, "AC3", ()=>$d10fdff0b3f22a66$export$ac824f187e852f5a);
+class Cluster {
+    #x;
+    #index;
+    #maxNs;
+    constructor(x){
+        this.#index = 0;
+        this.#maxNs = [];
+        this._ns = [];
+        this.#x = x;
+        for (const v of x.domain())this._ns.push(new Neuron(v));
+        this.#setActivity((0, _random.rand)(this._ns.length));
+    }
+    #setActivity(index) {
+        for (const n of this._ns)n._isActive = false;
+        this._ns[index]._isActive = true;
+        this.#index = index;
+    }
+    applyToVariable() {
+        this.#x.assign(this._ns[this.#index]._value);
+    }
+    // Turn on the node with the largest input.
+    setActivityMaximumInput() {
+        this.#maxNs.length = 0;
+        let max = Number.NEGATIVE_INFINITY;
+        let alreadyOn = false;
+        for(let i = 0; i < this._ns.length; ++i){
+            const input = this._ns[i].getInput();
+            if (max <= input) {
+                if (max < input) {
+                    max = input;
+                    this.#maxNs.length = 0;
+                    alreadyOn = false;
+                }
+                this.#maxNs.push(i);
+                if (this.#index === i) alreadyOn = true;
+            }
+        }
+        if (alreadyOn || 0 === this.#maxNs.length) return false;
+        this.#setActivity(this.#maxNs[(0, _random.rand)(this.#maxNs.length)]);
+        return true;
+    }
+    [Symbol.iterator]() {
+        return this._ns[Symbol.iterator]();
+    }
+}
+class Connection {
+    #c;
+    #n0;
+    #n1;
+    // Order of neurons must be the same as the order of variables that the constraint has.
+    constructor(c, first, second = null){
+        this.#c = c;
+        this.#n0 = first;
+        this.#n1 = second;
+        this._w = c.status() - 1;
+        this.#n0.addConnection(this);
+        if (this.#n1) this.#n1.addConnection(this);
+    }
+    getNeuron(self) {
+        if (self === this.#n0) return this.#n1;
+        if (self === this.#n1) return this.#n0;
+        return null;
+    }
+    refreshWeight() {
+        if (!this.#n0._isActive || this.#n1 !== null && !this.#n1._isActive) return;
+        const r = this.#c.relation();
+        if (this.#c.size() === 1) this._w += r(this.#n0._value) - 1;
+        else this._w += r(this.#n0._value, this.#n1._value) - 1;
+    }
+}
+class Neuron {
+    #connections;
+    constructor(value){
+        this.#connections = [];
+        this._isActive = false // Direct reference (read, write) allowed.
+        ;
+        this._value = value;
+    }
+    addConnection(c) {
+        this.#connections.push(c);
+    }
+    getInput() {
+        let ret = 0;
+        for (const c of this.#connections){
+            const n = c.getNeuron(this); // If n is null, then the unary constraint.
+            ret += c._w * (n === null || n._isActive ? 1 : 0);
+        }
+        return ret;
+    }
+}
+
+},{"../misc/assignment-list":"7XBf8","../misc/random":"5CZO5","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aIVCa":[function(require,module,exports,__globalThis) {
+/**
+ * Class implements the local changes method.
+ * The implementation is optimized by converting recursive calls to loops.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LocalChanges", ()=>LocalChanges);
+var _assignmentList = require("../misc/assignment-list");
+var _solver = require("../solver");
+class LocalChanges extends (0, _solver.Solver) {
+    #globalRet;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super();
+    }
+    /**
+	 * {@override}
+	 */ name() {
+        return 'Local Changes';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        if (this.pro.emptySize() === 0) this.pro.clearAllVariables();
+        this.#globalRet = false;
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const notFixed = new Set();
+        const unassigned = new Set();
+        for (const x of this.pro.variables())(!x.isEmpty() ? notFixed : unassigned).add(x);
+        const sol = new (0, _assignmentList.AssignmentList)();
+        const ret = this.#lcVariables(new Set(), notFixed, unassigned);
+        const ev = this.pro.ratio();
+        this.monitor.outputDebugString(`Evaluation: ${ev}`);
+        if (ret) {
+            sol.setProblem(this.pro);
+            if (this.monitor.solutionFound(sol, ev)) return true;
+        }
+        return ret;
+    }
+    #lcVariables(X1, X2, X3) {
+        X2 = new Set(X2); // Clone
+        X3 = new Set(X3); // Clone
+        while(true){
+            this.monitor.outputDebugString(`X1 ${X1.size}, X2' ${X2.size}, X3' ${X3.size}`);
+            const r = this.monitor.check(this.pro.degree());
+            if (r !== null) {
+                this.#globalRet = true;
+                return r;
+            }
+            if (0 === X3.size) return true;
+            const x = X3.values().next().value;
+            const ret = this.#lcVariable(X1, X2, x);
+            if (!ret || this.#globalRet) return ret;
+            X2.add(x);
+            X3.delete(x);
+        }
+    }
+    #lcVariable(X1, X2, x) {
+        for (const v of x.domain()){
+            const al = (0, _assignmentList.AssignmentList).fromVariables(X2);
+            x.assign(v);
+            const ret = this.#lcValue(X1, X2, x);
+            if (ret || this.#globalRet) return ret;
+            x.clear();
+            al.apply();
+        }
+        return false;
+    }
+    #lcValue(X1, X2, x) {
+        if (!this.#isConsistent(X1, x, x.value())) return false;
+        const X12 = X1.union(X2);
+        if (this.#isConsistent(X12, x, x.value())) return true;
+        const X3 = this.#createX3(X12, x, x.value());
+        X1 = cloneAndAdd(X1, x);
+        X2 = X2.difference(X3);
+        return this.#lcVariables(X1, X2, X3);
+    }
+    #isConsistent(A, x, v) {
+        const cs = new Set();
+        for (const xa of A){
+            const temp = this.pro.constraintsBetween(x, xa);
+            for (const c of temp)cs.add(c);
+        }
+        const origV = x.value(); // Save the value.
+        x.assign(v);
+        for (const c of cs)if (c.status() !== 1) {
+            x.assign(origV); // Restore the value.
+            return false;
+        }
+        x.assign(origV); // Restore the value.
+        return true;
+    }
+    #createX3(X12, x, v) {
+        const newX3 = new Set();
+        const cs = new Set();
+        for (const xa of X12)for (const c of this.pro.constraintsBetween(x, xa))cs.add(c);
+        const origV = x.value(); // Save the value.
+        x.assign(v);
+        for (const c of cs){
+            if (c.status() !== 1) for (const xi of c)newX3.add(xi);
+        }
+        x.assign(origV); // Restore the value.
+        newX3.delete(x);
+        return newX3;
+    }
+}
+function cloneAndAdd(s, e) {
+    return new Set(s).add(e);
+}
+
+},{"../misc/assignment-list":"7XBf8","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5geKS":[function(require,module,exports,__globalThis) {
+/**
+ * This class that implements the forward checking method.
+ * The minimum-remaining-values (MRV) heuristic can also be used by specifying the option.
+ * Find the solution to the problem as the maximum CSP.
+ * Each variable must have its own domain because it hides domain elements as branch pruning.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "MaxForwardChecking", ()=>MaxForwardChecking);
+var _assignmentList = require("../misc/assignment-list");
+var _domainPruner = require("../misc/domain-pruner");
+var _problems = require("../../util/problems");
+var _solver = require("../solver");
+class MaxForwardChecking extends (0, _solver.Solver) {
+    #xs;
+    #rct;
+    #dps;
+    #sol;
+    #maxVc;
+    #useMRV;
+    /**
+	 * Generates a solver.
+	 */ constructor(){
+        super(), this.#useMRV = true;
+    }
+    /**
+	 * Specify whether to use the minimum-remaining-values (MRV) heuristic.
+	 * Use of MRV may increase processing time for some problems.
+	 * Default is false.
+	 * @param flag Use MRV if true.
+	 */ setUsingMinimumRemainingValuesHeuristics(flag) {
+        this.#useMRV = flag;
+    }
+    /**
+	 * {@override}
+	 */ name() {
+        return 'Max Forward Checking';
+    }
+    /**
+	 * {@override}
+	 */ preprocess() {
+        this.#xs = [
+            ...this.pro.variables()
+        ];
+        this.#rct = (0, _problems.createRelatedConstraintTable)(this.pro, this.#xs);
+        this.#dps = Array.from(this.#xs, (x)=>new (0, _domainPruner.DomainPruner)(x.domain().size()));
+        this.#sol = new (0, _assignmentList.AssignmentList)();
+        this.#maxVc = this.pro.constraintSize();
+        this.pro.clearAllVariables();
+        this.monitor.initialize();
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        const ret = this.#branch(0);
+        this.#sol.apply();
+        return ret === true;
+    }
+    #branch(level, curVc = 0) {
+        if (level === this.pro.variableSize()) {
+            const ev = this.pro.ratio();
+            this.#sol.setProblem(this.pro);
+            this.monitor.outputDebugString('\t' + `Evaluation ${ev}`);
+            if (curVc < this.#maxVc) {
+                this.#maxVc = curVc;
+                if (this.monitor.solutionFound(this.#sol, ev)) return true; // Success.
+            }
+            return this.monitor.check(ev);
+        }
+        let ret = null;
+        if (null !== (ret = this.monitor.check())) return ret; // Success or failure.
+        const x = this.#xs[this.#useMRV ? (0, _domainPruner.indexOfVariableWithMRV)(this.#xs, this.#dps) : level];
+        const d = x.domain();
+        const dp = this.#dps[x.index()];
+        for(let i = 0, n = d.size(); i < n; ++i){
+            if (dp.isPruned(i)) continue;
+            x.assign(d.at(i));
+            const vc = curVc + this.#getViolationCountAround(x);
+            if (this.#maxVc <= vc) continue;
+            if (curVc + 1 < this.#maxVc || this.#checkForward(level, x)) {
+                ret = this.#branch(level + 1, vc);
+                if (null !== ret) break;
+            }
+            for (const dp of this.#dps)dp.recover(level);
+        }
+        if (ret === null) {
+            for (const dp of this.#dps)dp.recover(level);
+            x.clear();
+        }
+        return ret;
+    }
+    // Checks for possible assignment to a future variable from the current variable assignment.
+    #checkForward(level, x) {
+        for (const x_i of this.#xs){
+            if (!x_i.isEmpty()) continue; // If it is a past or present variable.
+            const cs = this.#getConstraintsBetween(x.index(), x_i.index());
+            const dp_i = this.#dps[x_i.index()];
+            const d_i = x_i.domain();
+            for (const c of cs){
+                if (c.emptySize() !== 1) continue;
+                if (!this.#checkForwardConsistency(level, x_i, d_i, dp_i, c)) return false;
+            }
+        }
+        return true;
+    }
+    // Retrieves an array of constraints from a table that caches constraints between two variables.
+    #getConstraintsBetween(i, j) {
+        return i < j ? this.#rct[j][i] : this.#rct[i][j];
+    }
+    // Check for consistency between the current variable and one future variable, and prune elements of the domain that are inconsistent (when there is one unassigned variable in the scope of the constraint).
+    #checkForwardConsistency(level, x, d, dp, c) {
+        for(let i = 0, n = d.size(); i < n; ++i){
+            if (dp.isPruned(i)) continue;
+            x.assign(d.at(i));
+            if (c.status() === 0) dp.prune(i, level);
+        }
+        x.clear();
+        return !dp.isEmpty(); // Failure if the domain of one of the future variables is empty.
+    }
+    // Find the number of constraint violations that have increased due to the current value of the variable x.
+    #getViolationCountAround(x) {
+        let vc = 0;
+        for (const c of x)if (c.status() === 0) ++vc;
+        return vc;
+    }
+}
+
+},{"../misc/assignment-list":"7XBf8","../misc/domain-pruner":"9ljra","../../util/problems":"kAwtv","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4nXpt":[function(require,module,exports,__globalThis) {
 /**
  * The class implements AC-3, one of the arc consistency algorithms.
  *
  * @author Takuto Yanagida
- * @version 2023-04-10
- */ class $d10fdff0b3f22a66$export$ac824f187e852f5a {
-    static #checkConsistency(c6, v_j) {
-        for (const val of v_j.domain()){
-            v_j.assign(val);
-            if (c6.isSatisfied() === 1) return true; // Current assignment of v_i is consistent.
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "AC3", ()=>AC3);
+class AC3 {
+    static #checkConsistency(c, x_j) {
+        for (const v of x_j.domain()){
+            x_j.assign(v);
+            if (c.status() === 1) return true; // Current assignment of v_i is consistent.
         }
         return false;
     }
-    static #reviseDomain(p, v_i, v_j1) {
-        const val_i = v_i.value();
-        const val_j = v_j1.value(); // Save the value.
-        const d_i = v_i.domain();
-        const temp = [];
-        const cs = p.constraintsBetween(v_i, v_j1);
-        vals: for (const val of d_i){
-            v_i.assign(val);
-            for (const c1 of cs){
-                if (c1.size() !== 2) continue; // Check the next constraint
-                if (!$d10fdff0b3f22a66$export$ac824f187e852f5a.#checkConsistency(c1, v_j1)) continue vals; // Since there is no partner satisfying the constraint, check the next value.
+    static #reviseDomain(p, x_i, x_j) {
+        const v_i = x_i.value();
+        const v_j = x_j.value(); // Save the value.
+        const d_i = x_i.domain();
+        const vs = [];
+        const cs = p.constraintsBetween(x_i, x_j);
+        vs: for (const v of d_i){
+            x_i.assign(v);
+            for (const c of cs){
+                if (c.size() !== 2) continue; // Check the next constraint
+                if (!AC3.#checkConsistency(c, x_j)) continue vs; // Since there is no partner satisfying the constraint, check the next value.
             }
-            temp.push(val);
+            vs.push(v);
         }
-        v_i.assign(val_i); // Restore the value.
-        v_j1.assign(val_j); // Restore the value.
-        if (temp.length !== d_i.size()) {
-            const nd = p.createDomain({
-                values: temp
-            });
-            v_i.setDomain(nd);
-            this._debugOutput(d_i.size() + " -> " + nd.size());
+        x_i.assign(v_i); // Restore the value.
+        x_j.assign(v_j); // Restore the value.
+        if (vs.length !== d_i.size()) {
+            const nd = p.createDomain(vs);
+            x_i.domain(nd);
+            console.log(d_i.size() + ' -> ' + nd.size());
             return true;
         }
         return false;
     }
     static apply(p) {
         const cs = [];
-        for (const c1 of p.constraints())if (c1.size() === 2) cs.add(c1);
-        while(!cs.isEmpty()){
-            const c1 = cs.remove(cs.size() - 1);
-            const v_k = c1.at(0);
-            const v_m = c1.at(1);
-            if ($d10fdff0b3f22a66$export$ac824f187e852f5a.#reviseDomain(p, v_k, v_m)) {
-                for (const c1 of p.constraints())if (c1.size() === 2 && c1.at(1) === v_k && c1.at(0) !== v_m) cs.add(0, c1);
+        for (const c of p.constraints())if (c.size() === 2) cs.push(c);
+        while(cs.length){
+            const c = cs.pop();
+            const v_k = c.at(0);
+            const v_m = c.at(1);
+            if (AC3.#reviseDomain(p, v_k, v_m)) {
+                for (const c1 of p.constraints())if (c1.size() === 2 && c1.at(1) === v_k && c1.at(0) !== v_m) cs.unshift(c1);
             }
         }
     }
 }
-var $a8cdbbce0cfe8aee$exports = {};
-$parcel$export($a8cdbbce0cfe8aee$exports, "NodeConsistency", ()=>$a8cdbbce0cfe8aee$export$975ddbe83e2b310a);
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"arUPL":[function(require,module,exports,__globalThis) {
 /**
  * Utility class that performs node consistency.
  *
  * @author Takuto Yanagida
- * @version 2023-04-11
- */ class $a8cdbbce0cfe8aee$export$975ddbe83e2b310a {
-    /**
-	 * Guarantees consistency of fuzzy unary constraints. The domain of each variable is replaced as needed.
-	 * Deletes elements from domains that do not meet the specified worst satisfaction degree.
-	 * @param p A problem.
-	 * @param threshold Worst satisfaction degree.
-	 * @return True if there is no empty domain.
-	 */ static apply(p, threshold) {
-        for (const v of p.variables()){
-            const d = v.domain();
-            const origVal = v.value(); // Save the value.
-            const elms = [];
-            for (const c1 of v){
-                if (c1.size() !== 1) continue;
-                for (const val of d){
-                    v.assign(val);
-                    if (c1.satisfactionDegree() >= threshold) elms.push(val);
-                }
-                p.removeConstraint(c1);
-            }
-            v.assign(origVal); // Restore the value.
-            if (elms.length === 0) return false;
-            v.setDomain(p.createDomain({
-                values: elms
-            }));
-        }
-        return true;
-    }
-    /**
-	 * Guarantees consistency of crisp unary constraints. The domain of each variable is replaced as needed.
-	 * It cannot be applied to crisp views of fuzzy constraint satisfaction problems because it changes the structure of the constraint graph.
-	 * @param p A crisp problem.
-	 * @return True if there is no empty domain.
-	 */ static apply(p) {
-        for (const v of p.variables()){
-            const d = v.domain();
-            const origVal = v.value(); // Save the value.
-            const elms = [];
-            for (const c1 of v){
-                if (c1.size() !== 1) continue;
-                for (const val of d){
-                    v.assign(val);
-                    if (c1.isSatisfied() === 1) elms.push(val);
-                }
-                p.removeConstraint(c1);
-            }
-            v.assign(origVal); // Restore the value.
-            if (elms.length === 0) return false;
-            v.setDomain(p.createDomain({
-                values: elms
-            }));
-        }
-        return true;
-    }
-}
-var $e26450ba7c736240$exports = {};
-$parcel$export($e26450ba7c736240$exports, "Problems", ()=>$e26450ba7c736240$export$32fae9b8f93405d0);
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
 /**
- * Utility class for constraint satisfaction problems.
+ * Guarantees consistency of fuzzy unary constraints. The domain of each variable is replaced as needed.
+ * Deletes elements from domains that do not meet the specified worst satisfaction degree.
+ * @param p A problem.
+ * @param threshold Worst satisfaction degree.
+ * @return True if there is no empty domain.
+ */ parcelHelpers.export(exports, "applyNodeConsistencyToProblem", ()=>applyNodeConsistencyToProblem);
+/**
+ * Guarantees consistency of crisp unary constraints. The domain of each variable is replaced as needed.
+ * It cannot be applied to crisp views of fuzzy constraint satisfaction problems because it changes the structure of the constraint graph.
+ * @param p A crisp problem.
+ * @return True if there is no empty domain.
+ */ parcelHelpers.export(exports, "applyNodeConsistencyToCrispProblem", ()=>applyNodeConsistencyToCrispProblem);
+function applyNodeConsistencyToProblem(p, threshold) {
+    for (const x of p.variables()){
+        const d = x.domain();
+        const origV = x.value(); // Save the value.
+        const vs = [];
+        for (const c of x){
+            if (c.size() !== 1) continue;
+            for (const v of d){
+                x.assign(v);
+                if (threshold <= c.degree()) vs.push(v);
+            }
+            p.removeConstraint(c);
+        }
+        x.assign(origV); // Restore the value.
+        if (0 === vs.length) return false;
+        x.domain(p.createDomain(vs));
+    }
+    return true;
+}
+function applyNodeConsistencyToCrispProblem(p) {
+    for (const x of p.variables()){
+        const d = x.domain();
+        const origV = x.value(); // Save the value.
+        const vs = [];
+        for (const c of x){
+            if (c.size() !== 1) continue;
+            for (const v of d){
+                x.assign(v);
+                if (c.status() === 1) vs.push(v);
+            }
+            p.removeConstraint(c);
+        }
+        x.assign(origV); // Restore the value.
+        if (0 === vs.length) return false;
+        x.domain(p.createDomain(vs));
+    }
+    return true;
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"41sLb":[function(require,module,exports,__globalThis) {
+/**
+ * Class of post-stabilization.
  *
  * @author Takuto Yanagida
- * @version 2023-04-18
- */ class $e26450ba7c736240$export$32fae9b8f93405d0 {
-    static #averagePathLength(p1, v5, length, baseLength, vo) {
-        const vn = [];
-        for (const c1 of v5){
-            for (const vi of c1)if (length[vi.index()] === Number.MAX_VALUE) {
-                vn.push(vi);
-                length[vi.index()] = baseLength + 1;
-            }
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+/**
+ * Apply post-stabilization.
+ *
+ * @param p    Problem.
+ * @param orig Original assignment list.
+ * @param log  Log function.
+ */ parcelHelpers.export(exports, "applyPostStabilization", ()=>applyPostStabilization);
+/**
+ * Wrap the solver with post-stabilizer.
+ *
+ * @param solver Solver.
+ * @return Wrapped solver.
+ */ parcelHelpers.export(exports, "wrapWithPostStabilizer", ()=>wrapWithPostStabilizer);
+/**
+ * Class of post-stabilizer wrapper.
+ */ parcelHelpers.export(exports, "PostStabilizerWrapper", ()=>PostStabilizerWrapper);
+var _assignmentList = require("../misc/assignment-list");
+var _solver = require("../solver");
+function applyPostStabilization(p, orig, log = (e)=>console.log(e)) {
+    log('Start Post-Stabilization');
+    let stabilized;
+    let count = 0;
+    do {
+        log('\tPost-Stabilization: count ' + count++);
+        stabilized = false;
+        let ev_min = p.degree();
+        const xs = p.variables();
+        for(let i = 0; i < xs.length; ++i){
+            const x = xs[i];
+            const v = x.value();
+            const a = orig.at(i);
+            if (v === a.value()) continue;
+            a.apply(); // Try to assign the original.
+            if (ev_min <= p.degree()) stabilized = true;
+            else x.assign(v); // Restore.
         }
-        for (const vi of vn)vo.add(vi);
-        for (const vi of vn)$e26450ba7c736240$export$32fae9b8f93405d0.#averagePathLength(p1, vi, length, baseLength + 1, vo);
+    }while (stabilized);
+    log('Finish Post-Stabilization');
+    return stabilized;
+}
+function wrapWithPostStabilizer(solver) {
+    return new PostStabilizerWrapper(solver);
+}
+class PostStabilizerWrapper extends (0, _solver.Solver) {
+    #solver;
+    #criteria;
+    constructor(solver, criteria = Criteria.DEGREE){
+        super();
+        this.#solver = solver;
+        this.#criteria = criteria;
     }
     /**
-	 * Calculates the average path length for a given variable.
-	 * @param p A problem.
-	 * @param v A variable of the problem.
-	 * @return Average path length.
-	 */ static averagePathLength(p, v) {
-        const ls = new Array(p.variableSize());
-        ls.fill(Number.MAX_VALUE);
-        const vs = new Set();
-        vs.add(v);
-        ls[v.index()] = 0;
-        $e26450ba7c736240$export$32fae9b8f93405d0.#averagePathLength(p, v, ls, 0, vs);
-        let connectedSize = 0;
-        let sum = 0;
-        for(let i = 0; i < ls.length; ++i)if (ls[i] !== Number.MAX_VALUE && i !== v.index()) {
-            ++connectedSize;
-            sum += ls[i];
+	 * {@override}
+	 */ name() {
+        return this.#solver.name() + ' + PF';
+    }
+    /**
+	 * {@override}
+	 */ exec() {
+        let ev = 0;
+        let evs = 0;
+        if (this.monitor.isDebugMode()) {
+            ev = Criteria.DEGREE === this.#criteria ? this.pro.degree() : this.pro.ratio();
+            evs = this.pro.emptySize();
         }
-        if (connectedSize === 0) return 0;
-        return sum / connectedSize;
-    }
-    /**
-	 * Calculates the average path length.
-	 * @param p A problem.
-	 * @return Average path length.
-	 */ static averagePathLengths(p) {
-        const ls = new Array(p.variableSize());
-        for (const v of p.variables())ls[v.index()] = $e26450ba7c736240$export$32fae9b8f93405d0.averagePathLength(p, v);
-        return ls;
-    }
-    /**
-	 * Gets an array containing all domains.
-	 * @param p A problem.
-	 * @return Array of domains.
-	 */ static domains(p) {
-        const ds = [];
-        for (const v of p.variables())ds.push(v.domain());
-        return ds;
-    }
-    /**
-	 * Returns the array of possible satisfaction degree values for all unary constraints.
-	 * @param p A problem.
-	 * @param degrees Array of degree values.
-	 * @return The array.
-	 */ static possibleSatisfactionDegreesOfUnaryConstraints(p, degrees) {
-        for (const c1 of p.constraints()){
-            if (c1.size() !== 1) continue;
-            const v = c1.at(0);
-            const origVal = v.value(); // Save the value.
-            for (const val of v.domain()){
-                v.assign(val);
-                degrees.add(c1.satisfactionDegree());
-            }
-            v.assign(origVal); // Restore the value.
-        }
-        return degrees;
-    }
-    /**
-	 * Set up all domains.
-	 * @param p A problem.
-	 * @param ds Array of domains.
-	 */ static setDomains(p, ds) {
-        for(let i = 0; i < ds.length; ++i)p.variableAt(i).setDomain(ds[i]);
-    }
-    /**
-	 * Returns a view of the fuzzy constraint satisfaction problem as a crisp constraint satisfaction problem.
-	 * The relations and domains of the specified fuzzy constraint satisfaction problem are reused, but the other elements are newly generated.
-	 * Note: Assignments to variables and changes to domains of the view are reflected in the variables of the original problem.
-	 * @param p A fuzzy constraint satisfaction problem.
-	 * @param threshold The threshold of constraint satisfaction degree. A constraint is considered satisfied when the constraint satisfaction degree is greater than or equal to this value.
-	 * @return A crisp constraint satisfaction problem.
-	 */ static toViewAsCrispProblem(p, threshold) {
-        const cp = new $e26450ba7c736240$var$CrispFuzzyProblem();
-        for (const v of p.variables())cp.createVariable(v);
-        for (c of p.constraints()){
-            const vs = [];
-            for (const v of c)vs.push(cp.variableAt(v.index()));
-            const r = c.crispRelation();
-            if (c.isFuzzy()) r = new $e26450ba7c736240$var$CrispFuzzyRelation(c.fuzzyRelation(), threshold);
-            cp.createConstraint({
-                relation: r,
-                variables: vs
-            });
-        }
-        return cp;
+        const orig = new (0, _assignmentList.AssignmentList)();
+        orig.setProblem(this.pro);
+        const res = this.#solver.solve(this.pro, this.monitor);
+        if (res) applyPostStabilization(this.pro, orig, this.monitor.outputDebugString.bind(this.monitor));
+        this.monitor.outputDebugString(`Solver result: ${res ? 'Success' : 'Failure'}`);
+        this.monitor.outputDebugString(`Evaluation: ${ev} -> ${Criteria.DEGREE === this.#criteria ? this.pro.degree() : this.pro.ratio()}`);
+        this.monitor.outputDebugString(`Empty variable size: ${evs} -> ${this.pro.emptySize()}`);
+        return res;
     }
 }
-class $e26450ba7c736240$var$CrispFuzzyProblem extends $c624e9db75d26c9f$export$2d7b2a6964dca148 {
-    createVariable(v) {
-        const iv = new $e26450ba7c736240$var$ImaginaryVariable(v);
-        this.addVariable(iv);
-        return v;
-    }
-}
-class $e26450ba7c736240$var$CrispFuzzyRelation extends $9098286a4d3ce42f$export$182ea39d269dda05 {
-    #th;
-    #fr;
-    constructor(fr, th){
-        this.#fr = fr;
-        this.#th = th;
-    }
-    isSatisfied(...vs) {
-        return this.#fr.satisfactionDegree(vs) >= this.#th;
-    }
-}
-class $e26450ba7c736240$var$ImaginaryVariable extends $8a169d84b9853138$export$c867a5c9595a1350 {
-    #orig;
-    constructor(v){
-        super(v.owner(), v.domain());
-        this.#orig = v;
-        setName(v.name());
-        assign(v.value());
-    }
-    assign(value) {
-        this.#orig.assign(value);
-    }
-    domain() {
-        return this.#orig.domain();
-    }
-    setDomain(dom) {
-        this.#orig.setDomain(dom);
-    }
-    value() {
-        return this.#orig.value();
-    }
-}
-var $ef2881bbdac82876$exports = {};
-$parcel$export($ef2881bbdac82876$exports, "LoopDetector", ()=>$ef2881bbdac82876$export$136021658ac30d9);
+const Criteria = {
+    DEGREE: 'degree',
+    RATIO: 'ratio'
+};
+
+},{"../misc/assignment-list":"7XBf8","../solver":"dvfQo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5Ey8F":[function(require,module,exports,__globalThis) {
 /**
  * This class detects that a solver's operation is looping.
  *
  * @author Takuto Yanagida
- * @version 2023-04-16
- */ class $ef2881bbdac82876$export$136021658ac30d9 {
-    #indices = [];
-    #values = [];
-    #cur = null;
-    #loopLength = null;
-    #iterCount = null;
+ * @version 2024-10-22
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "LoopDetector", ()=>LoopDetector);
+class LoopDetector {
+    #loopLength;
+    #iterCount;
+    #is;
+    #vs;
+    #cur;
     constructor(loopLength = 30, iterCount = 3){
+        this.#is = [];
+        this.#vs = [];
+        this.#cur = 0;
         this.#loopLength = loopLength;
         this.#iterCount = iterCount;
         this.#initArrays();
     }
-    #assignToVariable(index2, value) {
-        this.#indices[this.#cur] = index2;
-        this.#values[this.#cur] = value;
-        if (--this.#cur === -1) this.#cur = this.#indices.length - 1;
+    #assignToVariable(index, value) {
+        this.#is[this.#cur] = index;
+        this.#vs[this.#cur] = value;
+        if (--this.#cur === -1) this.#cur = this.#is.length - 1;
     }
     #checkLooping() {
-        const key = new Array(this.#loopLength);
-        const val = new Array(this.#loopLength);
+        const is = new Array(this.#loopLength);
+        const vs = new Array(this.#loopLength);
         out: for(let length = 1; length <= this.#loopLength; ++length){
             let offset = this.#cur + 1;
             for(let i = 0; i < length; ++i){
-                if (i + offset === this.#indices.length) offset -= this.#indices.length;
-                key[i] = this.#indices[i + offset];
-                val[i] = this.#values[i + offset];
+                if (i + offset === this.#is.length) offset -= this.#is.length;
+                is[i] = this.#is[i + offset];
+                vs[i] = this.#vs[i + offset];
             }
             let fi = length;
             for(let i = 0; i < this.#iterCount - 1; ++i){
                 offset = this.#cur + 1;
                 for(let j = 0; j < length; ++j){
-                    if (fi + j + offset >= this.#indices.length) offset -= this.#indices.length;
-                    if (this.#indices[fi + j + offset] !== key[j] || this.#values[fi + j + offset] !== val[j]) continue out;
+                    if (fi + j + offset >= this.#is.length) offset -= this.#is.length;
+                    if (this.#is[fi + j + offset] !== is[j] || this.#vs[fi + j + offset] !== vs[j]) continue out;
                 }
                 fi += length;
             }
@@ -6533,19 +5892,19 @@ $parcel$export($ef2881bbdac82876$exports, "LoopDetector", ()=>$ef2881bbdac82876$
         return 0;
     }
     #initArrays() {
-        this.#indices = new Array(this.#loopLength * this.#iterCount);
-        this.#values = new Array(this.#loopLength * this.#iterCount);
-        this.#indices.fill(-1);
-        this.#values.fill(-1);
-        this.#cur = this.#indices.length - 1;
+        this.#is = new Array(this.#loopLength * this.#iterCount);
+        this.#vs = new Array(this.#loopLength * this.#iterCount);
+        this.#is.fill(-1);
+        this.#vs.fill(-1);
+        this.#cur = this.#is.length - 1;
     }
     checkLoop(variableIndex, value) {
         this.#assignToVariable(variableIndex, value);
         return this.#checkLooping();
     }
     clear() {
-        this.#indices.fill(-1);
-        this.#values.fill(-1);
+        this.#is.fill(-1);
+        this.#vs.fill(-1);
     }
     iterationCount() {
         return this.#iterCount;
@@ -6554,43 +5913,146 @@ $parcel$export($ef2881bbdac82876$exports, "LoopDetector", ()=>$ef2881bbdac82876$
         return this.#loopLength;
     }
     values() {
-        return this.#values.clone();
+        return this.#vs.slice();
     }
     variableIndices() {
-        return this.#indices.clone();
+        return this.#is.slice();
     }
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, "__esModule", {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === "default" || key === "__esModule" || dest.hasOwnProperty(key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fZNVH":[function(require,module,exports,__globalThis) {
+/**
+ * Solver factory class.
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-23
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "SolverFactory", ()=>SolverFactory);
+class SolverFactory {
+    static crispSolverNames() {
+        return [
+            /* 0 */ 'Forward Checking',
+            /* 1 */ 'Max Forward Checking',
+            /* 2 */ 'Local Changes',
+            /* 3 */ 'Breakout',
+            /* 4 */ 'GENET',
+            /* 5 */ 'Crisp SRS3'
+        ];
+    }
+    static fuzzySolverNames() {
+        return [
+            /* 0 */ 'Full Checking',
+            /* 1 */ 'Fuzzy Forward Checking',
+            /* 2 */ 'Flexible Local Changes',
+            /* 3 */ 'Fuzzy Breakout',
+            /* 4 */ 'Fuzzy GENET',
+            /* 5 */ 'SRS3'
+        ];
+    }
+    static async createSolver(type) {
+        const cs = await SolverFactory.createCrispSolver(type);
+        if (cs) return cs;
+        const fs = await SolverFactory.createFuzzySolver(type);
+        if (fs) return fs;
+        return null;
+    }
+    static async createCrispSolver(type) {
+        switch(type.replaceAll(' ', '')){
+            case 'ForwardChecking':
+            case 'forward-checking':
+                const { ForwardChecking } = await require("e773cdcd9dbc6e06");
+                return new ForwardChecking();
+            case 'MaxForwardChecking':
+            case 'max-forward-checking':
+                const { MaxForwardChecking } = await require("27409f8f64e150d4");
+                return new MaxForwardChecking();
+            case 'LocalChanges':
+            case 'local-changes':
+                const { LocalChanges } = await require("b2a650ca4570499");
+                return new LocalChanges();
+            case 'Breakout':
+            case 'breakout':
+                const { Breakout } = await require("934f75f3a340d46b");
+                return new Breakout();
+            case 'GENET':
+            case 'genet':
+                const { GENET } = await require("30bec456e55a3f5d");
+                return new GENET();
+            case 'CrispSRS3':
+            case 'crisp-srs3':
+                const { CrispSRS3 } = await require("934c3176b9e94ed1");
+                return new CrispSRS3();
+        }
+        return null;
+    }
+    static async createFuzzySolver(type) {
+        switch(type.replaceAll(' ', '')){
+            case 'FullChecking':
+            case 'full-checking':
+                const { FullChecking } = await require("347444b51e4c8e70");
+                return new FullChecking();
+            case 'FuzzyForwardChecking':
+            case 'fuzzy-forward-checking':
+                const { FuzzyForwardChecking } = await require("ffb12d2c6160abdc");
+                return new FuzzyForwardChecking();
+            case 'FlexibleLocalChanges':
+            case 'flexible-local-changes':
+                const { FlexibleLocalChanges } = await require("bf74eba5b4fc8f67");
+                return new FlexibleLocalChanges();
+            case 'FuzzyBreakout':
+            case 'fuzzy-breakout':
+                const { FuzzyBreakout } = await require("295e58772e978909");
+                return new FuzzyBreakout();
+            case 'FuzzyGENET':
+            case 'fuzzy-genet':
+                const { FuzzyGENET } = await require("a1fd01f492f3ef60");
+                return new FuzzyGENET();
+            case 'SRS3':
+            case 'srs3':
+                const { SRS3 } = await require("dbf34ab333557fc0");
+                return new SRS3();
+        }
+        return null;
+    }
+}
 
-},{}]},["e64mY","cgMBW"], "cgMBW", "parcelRequire0e1f")
+},{"e773cdcd9dbc6e06":"3Yu0u","27409f8f64e150d4":"9svtm","b2a650ca4570499":"b6QWi","934f75f3a340d46b":"AAMC1","30bec456e55a3f5d":"ebiFq","934c3176b9e94ed1":"3N9QB","347444b51e4c8e70":"854Je","ffb12d2c6160abdc":"etmuG","bf74eba5b4fc8f67":"3pg1O","295e58772e978909":"hyNnz","a1fd01f492f3ef60":"hXqtS","dbf34ab333557fc0":"2Grf6","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3Yu0u":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("8meAj"));
+
+},{"8meAj":"8meAj"}],"9svtm":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("5geKS"));
+
+},{"5geKS":"5geKS"}],"b6QWi":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("aIVCa"));
+
+},{"aIVCa":"aIVCa"}],"AAMC1":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("fSOIG"));
+
+},{"fSOIG":"fSOIG"}],"ebiFq":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("bqKOq"));
+
+},{"bqKOq":"bqKOq"}],"3N9QB":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("gtT5Y"));
+
+},{"gtT5Y":"gtT5Y"}],"854Je":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("gYH7K"));
+
+},{"gYH7K":"gYH7K"}],"etmuG":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("6vCMZ"));
+
+},{"6vCMZ":"6vCMZ"}],"3pg1O":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("2juau"));
+
+},{"2juau":"2juau"}],"hyNnz":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("JK6En"));
+
+},{"JK6En":"JK6En"}],"hXqtS":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("ezeI0"));
+
+},{"ezeI0":"ezeI0"}],"2Grf6":[function(require,module,exports,__globalThis) {
+module.exports = Promise.resolve(module.bundle.root("5QD09"));
+
+},{"5QD09":"5QD09"}]},["7FgAn","cgMBW"], "cgMBW", "parcelRequire94c2")
 
 //# sourceMappingURL=index.4fba9c0b.js.map

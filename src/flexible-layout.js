@@ -71,7 +71,7 @@ export class FlexibleLayout {
 
 			const mon = new stlics.Monitor();
 			mon.setTarget(r);
-			mon.setTimeLimit(200);
+			mon.setTimeLimit(100);
 
 			const solver = new stlics.FuzzyForwardChecking();
 
