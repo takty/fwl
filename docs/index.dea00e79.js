@@ -602,24 +602,84 @@ var _fwlEsmJs = require("../../dist/fwl.esm.js");
         main();
     });
     const UNIT = 24;
+    let isResizing = false;
+    let lastX = 0;
+    let lastY = 0;
+    const offscreenCanvas = document.createElement('canvas');
+    const offscreenCtx = offscreenCanvas.getContext('2d');
     function main() {
         const can = document.createElement('canvas');
         document.body.appendChild(can);
-        let fl = initialize();
-        onResize(fl, can);
-        window.addEventListener('resize', ()=>onResize(fl, can));
-    }
-    function setCanvasSize(can) {
-        can.width = Math.floor((document.documentElement.clientWidth - 16) / UNIT) * UNIT;
-        can.height = Math.floor((document.documentElement.clientHeight - 16) / UNIT) * UNIT;
-    }
-    function onResize(fl, can) {
-        setCanvasSize(can);
+        can.style.border = '1px solid #0005';
+        can.width = 400;
+        can.height = 560;
         const ctx = can.getContext('2d');
+        let fl = initialize();
+        let st = 0;
+        can.addEventListener('mousemove', (e)=>{
+            if (e.offsetX >= can.width - UNIT && e.offsetY >= can.height - UNIT) {
+                document.body.style.cursor = 'nw-resize';
+                e.stopPropagation();
+            } else document.body.style.cursor = '';
+        });
+        can.addEventListener('mousedown', (e)=>{
+            if (e.offsetX >= can.width - UNIT && e.offsetY >= can.height - UNIT) {
+                isResizing = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+        });
+        window.addEventListener('mousemove', (event)=>{
+            document.body.style.cursor = '';
+            if (isResizing) {
+                const dX = event.clientX - lastX;
+                const dY = event.clientY - lastY;
+                can.width = Math.max(400, can.width + dX);
+                can.height = Math.max(400, can.height + dY);
+                if (offscreenCtx) {
+                    ctx?.drawImage(offscreenCanvas, 0, 0);
+                    drawResizeSign(can, ctx);
+                }
+                lastX = event.clientX;
+                lastY = event.clientY;
+                clearTimeout(st);
+                st = setTimeout(()=>{
+                    onResize(fl, can, ctx);
+                }, 100);
+            }
+        });
+        window.addEventListener('mouseup', ()=>{
+            isResizing = false;
+        });
+        onResize(fl, can, ctx);
+    }
+    function onResize(fl, can, ctx) {
         ctx.clearRect(0, 0, can.width, can.height);
         ctx.font = '12px san-serif';
-        start(fl);
+        start(fl, can.width, can.height);
         draw(fl, ctx);
+        if (offscreenCtx) {
+            offscreenCanvas.width = can.width;
+            offscreenCanvas.height = can.height;
+            offscreenCtx.drawImage(can, 0, 0);
+        }
+        drawResizeSign(can, ctx);
+    }
+    // -------------------------------------------------------------------------
+    function drawResizeSign(can, ctx) {
+        if (ctx) {
+            const size = UNIT;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(can.width - size, can.height - size, size, size);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.lineWidth = 2;
+            for(let i = 0; i < size; i += 6){
+                ctx.beginPath();
+                ctx.moveTo(can.width - i, can.height); // 右下の線を引く
+                ctx.lineTo(can.width, can.height - i);
+                ctx.stroke();
+            }
+        }
     }
     // -------------------------------------------------------------------------
     function initialize() {
@@ -651,9 +711,9 @@ var _fwlEsmJs = require("../../dist/fwl.esm.js");
         fl.setRootContainer(cw);
         return fl;
     }
-    function start(fl) {
-        const width = Math.floor((document.documentElement.clientWidth - 16) / UNIT);
-        const height = Math.floor((document.documentElement.clientHeight - 16) / UNIT);
+    function start(fl, cw, ch) {
+        const width = Math.floor(cw / UNIT);
+        const height = Math.floor(ch / UNIT);
         return fl.layoutContainer({
             width,
             height
@@ -665,7 +725,7 @@ var _fwlEsmJs = require("../../dist/fwl.esm.js");
             const { x: lx, y: ly } = r.getLocation();
             const { width, height } = r.getSize();
             ctx.strokeStyle = r.isValid() ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 0, 0, 0.75)';
-            ctx.lineWidth = 0.1;
+            ctx.lineWidth = 1;
             ctx.strokeRect(x * UNIT + lx * UNIT, y * UNIT + ly * UNIT, width * UNIT, height * UNIT);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.fillRect(x * UNIT + lx * UNIT, y * UNIT + ly * UNIT, width * UNIT, height * UNIT);
