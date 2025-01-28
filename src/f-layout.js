@@ -1,4 +1,4 @@
-import * as stlics from 'stlics';
+import * as stlics from 'stlics/stlics';
 import { FElement } from './f-element.js';
 import { Layout } from './layout/layout.js';
 
@@ -44,17 +44,17 @@ export class FLayout extends FElement {
 			const c = this.#children[i];
 			c.initializeProblem(p);
 
-			p.createConstraint({
-				name     : this.name() + ': toChild',
-				relation : new stlics.FuzzyRelationFunction((...vals) => this.#correspondingRelation(i, ...vals)),
-				variables: [this.getVariable(), c.getVariable()],
-			});
+			p.createConstraint(
+				(v0, v1) => this.#correspondingRelation(i, v0, v1),
+				[this.getVariable(), c.getVariable()],
+				this.name() + ': toChild',
+			);
 			if (c instanceof FLayout) {
-				p.createConstraint({
-					name     : this.name() + ': toChild',
-					relation : new stlics.FuzzyRelationFunction((...vals) => this.#differentDirectionRelation(c, ...vals)),
-					variables: [this.getVariable(), c.getVariable()],
-				});
+				p.createConstraint(
+					(v0, v1) => this.#differentDirectionRelation(c, v0, v1),
+					[this.getVariable(), c.getVariable()],
+					this.name() + ': toChild',
+				);
 			}
 		}
 	}
@@ -62,9 +62,9 @@ export class FLayout extends FElement {
 	#correspondingRelation(childIndex, val1, val2) {
 		const s = this._states[val1];
 		if (s.comb[childIndex + 1] === val2) {
-			return stlics.FuzzyRelation.MAX_SATISFACTION_DEGREE;
+			return 1;
 		}
-		return stlics.FuzzyRelation.MIN_SATISFACTION_DEGREE;
+		return 0;
 	}
 
 	#differentDirectionRelation(childLayout, val1, val2) {
@@ -73,7 +73,7 @@ export class FLayout extends FElement {
 		if (pd !== Layout.NO_DIR && cd !== Layout.NO_DIR && pd === cd) {
 			return FLayout.SAME_DIRECTION;
 		}
-		return stlics.FuzzyRelation.MAX_SATISFACTION_DEGREE;
+		return 1;
 	}
 
 
@@ -136,7 +136,7 @@ export class FLayout extends FElement {
 		if (this._states.length === 0) {
 			return false;
 		}
-		this.getVariable().setDomain(p.createDomain({ min: 0, max: this._states.length - 1 }));
+		this.getVariable().domain(p.createDomain(0, this._states.length - 1));
 		return true;
 	}
 

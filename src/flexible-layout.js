@@ -1,4 +1,4 @@
-import * as stlics from 'stlics';
+import * as stlics from 'stlics/stlics';
 import { FLayout } from './f-layout.js';
 
 export class FlexibleLayout {
@@ -69,17 +69,20 @@ export class FlexibleLayout {
 			if (FlexibleLayout.DEBUG) console.log(`\tIteration in wsd ${r}`);
 			if (!this.#setWorstDegree(p, r)) continue;
 
-			const solver = new stlics.FuzzyForwardChecking(p);
-			solver.setTargetRate(r);
+			const mon = new stlics.Monitor();
+			mon.setTarget(r);
+			mon.setTimeLimit(200);
 
-			if (solver.solve()) {
+			const solver = new stlics.FuzzyForwardChecking();
+
+			if (solver.solve(p, mon)) {
 				success = true;
 				this.#lastDegree = r;
 				break;
 			}
 		}
 		if (FlexibleLayout.DEBUG) {
-			console.log(`solveProblem - finished (${success}, wsd = ${p.worstSatisfactionDegree()})\n`);
+			console.log(`solveProblem - finished (${success}, wsd = ${p.degree()})\n`);
 			console.log(`time: ${Date.now() - time}`);
 		}
 		return success;
@@ -102,7 +105,7 @@ export class FlexibleLayout {
 	}
 
 	#sortVariablesInBreadthFirstOrder(p) {
-		const lens = stlics.Problems.averagePathLengths(p);
+		const lens = stlics.averagePathLengths(p);
 		const vs   = [this.#root.getVariable()];
 		let ls = [this.#root];
 

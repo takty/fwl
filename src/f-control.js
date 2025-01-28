@@ -32,7 +32,7 @@ export class FControl extends FElement {
 		if (this._states.length === 0) {
 			return false;
 		}
-		this.getVariable().setDomain(p.createDomain({ min: 0, max: this._states.length - 1 }));
+		this.getVariable().domain(p.createDomain(0, this._states.length - 1));
 		return true;
 	}
 

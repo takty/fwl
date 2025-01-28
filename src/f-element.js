@@ -1,4 +1,4 @@
-import * as stlics from 'stlics';
+import * as stlics from 'stlics/stlics';
 
 export class FElement {
 
@@ -53,18 +53,18 @@ export class FElement {
 		this._assignCandidates(0, this._cans);
 		this._baseCans = [ ...this._cans ];
 
-		this.#type = p.createVariable({ name: this.name() + ': type' } );
+		this.#type = p.createVariable(stlics.Domain.create([0]), 0, this.name() + ': type');
 
-		p.createConstraint({
-			name     : this.name() + ': type',
-			relation : new stlics.FuzzyRelationFunction((...vals) => this.#typeRelation(...vals)),
-			variables: [this.#type],
-		});
+		p.createConstraint(
+			(v0) => this.#typeRelation(v0),
+			[this.#type],
+			this.name() + ': type',
+		);
 	}
 
 	#typeRelation(val) {
 		if (this._states.length === 0) {
-			return stlics.FuzzyRelation.MIN_SATISFACTION_DEGREE;
+			return 0;
 		}
 		const pc = this._typeToCandidate(val);
 		return pc.getDegree();
