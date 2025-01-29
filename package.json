@@ -4,6 +4,7 @@
 	"description": "Flexible Widget Layout",
 	"license": "MIT",
 	"author": "Takuto Yanagida",
+	"type": "module",
 	"homepage": "https://github.com/takty/fwl#readme",
 	"repository": {
 		"type": "git",
@@ -12,18 +13,26 @@
 	"bugs": {
 		"url": "https://github.com/takty/fwl/issues"
 	},
-	"source": "src/index.ts",
-	"main": "dist/fwl.js",
-	"module": "dist/fwl.esm.js",
+	"browserslist": [
+		"> 1%",
+		"last 2 versions",
+		"not dead"
+	],
 	"scripts": {
-		"docs": "parcel src/_docs/*.html --dist-dir docs  --public-url /fwl/",
-		"dev": "parcel watch",
-		"build": "parcel build"
+		"build": "node ./build.js",
+		"docs": "vite build",
+		"dev": "vite src/_docs --base ./",
+		"debug": "tsc --noEmit -w"
 	},
 	"dependencies": {
-		"stlics": "github:takty/stlics"
+		"esbuild": "^0.24.2",
+		"sass-embedded": "^1.83.4",
+		"klales": "github:takty/klales",
+		"stlics": "github:takty/stlics",
+		"typescript": "^5.7.3",
+		"vite": "^6.0.11"
 	},
 	"devDependencies": {
-		"parcel": "^2.13.3"
+		"vite-tsconfig-paths": "^5.1.4"
 	}
 }

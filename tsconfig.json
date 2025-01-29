@@ -1,0 +1,32 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "esnext",
+
+		"strict": true,
+
+		"noUnusedLocals"                    : true,
+		"noUnusedParameters"                : true,
+		"exactOptionalPropertyTypes"        : true,
+		"noImplicitReturns"                 : true,
+		"noFallthroughCasesInSwitch"        : true,
+		"noUncheckedIndexedAccess"          : false,
+		"noImplicitOverride"                : true,
+		"noPropertyAccessFromIndexSignature": true,
+
+		"forceConsistentCasingInFileNames": true,
+		"traceResolution"                 : false,
+		"listFiles"                       : false,
+		"stripInternal"                   : true,
+		"skipDefaultLibCheck"             : true,
+		"skipLibCheck"                    : false,
+		"pretty"                          : true,
+		"noEmitOnError"                   : true,
+
+		"sourceMap"     : true,
+		"removeComments": true,
+	},
+	"files": [
+		"fwl.ts"
+	]
+}
