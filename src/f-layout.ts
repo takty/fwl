@@ -10,7 +10,7 @@ export class FLayout extends FElement {
 
 	#children: FElement[] = [];
 
-	name(): string {
+	override name(): string {
 		const can = this._typeToCandidate();
 		return can?.name() ?? 'layout';
 	}
@@ -39,7 +39,7 @@ export class FLayout extends FElement {
 	// -------------------------------------------------------------------------
 
 
-	initializeProblem(p: stlics.Problem): void {
+	override initializeProblem(p: stlics.Problem): void {
 		super.initializeProblem(p);
 
 		for (let i: number = 0; i < this.#children.length; ++i) {
@@ -152,7 +152,7 @@ export class FLayout extends FElement {
 		return true;
 	}
 
-	checkGivenMaximumSize(child, childMinSize: Size): boolean {
+	checkGivenMaximumSize(child: FElement, childMinSize: Size): boolean {
 		for (const lt of this._cans) {
 			const min: Size = (lt as Layout).getEstimatedMinimumSizeIf(this.#children, child, childMinSize);
 			if (this.getParent().checkGivenMaximumSize(this, min)) {

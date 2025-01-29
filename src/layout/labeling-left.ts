@@ -10,7 +10,7 @@ export class LeftLabeling extends Layout {
 		super(owner, deg, Layout.HORIZONTAL);
 	}
 
-	name(): string {
+	override name(): string {
 		return 'left labeling';
 	}
 
@@ -21,8 +21,8 @@ export class LeftLabeling extends Layout {
 	}
 
 	doLayout(children: FElement[], size: Size): void {
-		const le = children[0];
-		const ce = children[1];
+		const le: FElement = children[0];
+		const ce: FElement = children[1];
 		const ld: Size = le.getMinimumSize();
 		const cd: Size = ce.getMaximumSize();
 

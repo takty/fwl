@@ -15,11 +15,11 @@ export class SingleBoolean extends FControl {
 		this.#itemFalse = itemFalse;
 	}
 
-	name(): string {
+	override name(): string {
 		return 'single boolean (' + super.name() + ')';
 	}
 
-	_getCandidateEntries(): [number, (owner: any) => Layout | Control][] {
+	override _getCandidateEntries(): [number, (owner: any) => Layout | Control][] {
 		return [
 			[0.9, owner => new Checkbox(owner, 0.9, this.#itemTrue)],
 			[1.0, owner => new RadioButtons(owner, 1.0, [this.#itemTrue, this.#itemFalse])],

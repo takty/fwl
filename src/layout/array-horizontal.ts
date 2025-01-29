@@ -10,7 +10,7 @@ export class HorizontalArray extends Layout {
 		super(owner, deg, Layout.HORIZONTAL);
 	}
 
-	name(): string {
+	override name(): string {
 		return 'horizontal array';
 	}
 

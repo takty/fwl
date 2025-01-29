@@ -13,11 +13,11 @@ export class Multiple extends FControl {
 		this.#items = items;
 	}
 
-	name(): string {
+	override name(): string {
 		return 'multiple (' + super.name() + ')';
 	}
 
-	_getCandidateEntries(): [number, (owner: any) => Layout | Control][] {
+	override _getCandidateEntries(): [number, (owner: any) => Layout | Control][] {
 		const r: [number, (owner: any) => Layout | Control][] = ListBox.createVariableInstances(0.75, 0.9, this.#items);
 		r.push([1.0, owner => new Checkboxes(owner, 1.0, this.#items)]);
 		return r;

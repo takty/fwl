@@ -6,7 +6,7 @@ type Size = { width: number, height: number };
 
 export class FControl extends FElement {
 
-	name(): string {
+	override name(): string {
 		const can = this._typeToCandidate();
 		return can?.name() ?? 'control';
 	}

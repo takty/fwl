@@ -14,11 +14,11 @@ export class Caption extends FControl {
 		this.#shortText = shortText;
 	}
 
-	name(): string {
+	override name(): string {
 		return 'caption (' + super.name() + ')';
 	}
 
-	_getCandidateEntries(): [number, (owner: any) => Layout | Control][] {
+	override _getCandidateEntries(): [number, (owner: any) => Layout | Control][] {
 		return [
 			[1.0, owner => new Label(owner, 1.0, this.#longText)],
 			[0.8, owner => new Label(owner, 0.8, this.#shortText)],

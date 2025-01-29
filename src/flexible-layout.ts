@@ -1,4 +1,5 @@
 import * as stlics from 'stlics/stlics';
+import { FElement } from './f-element';
 import { FLayout } from './f-layout';
 
 type Size = { width: number, height: number };
@@ -10,15 +11,15 @@ export class FlexibleLayout {
 	static SORT_BY_DESCENDANT: boolean  = true;
 	static SORT_BY_PATH_LENGTH: boolean = true;
 
-	#root: FLayout;
+	#root!: FLayout;
 	#size: Size = { width: 0, height: 0 };
-	#lastDegree: number;
+	#lastDegree: number = 0;
 
 	setRootContainer(cw: FLayout): void {
 		this.#root = cw;
 		const that = this;
 		this.#root.setParent(new class {
-			checkGivenMaximumSize(fe, size: Size): boolean {
+			checkGivenMaximumSize(_fe: FElement, size: Size): boolean {
 				const h: number = that.#size.height;
 				const w: number = that.#size.width;
 				return (size.height <= h && size.width <= w);
@@ -58,13 +59,13 @@ export class FlexibleLayout {
 	}
 
 	#solveProblem(p: stlics.Problem, possibleDegrees: Set<number>): boolean {
-		let time = 0;
+		let time: number = 0;
 		if (FlexibleLayout.DEBUG) {
 			console.log('\nsolveProblem - started');
 			time = Date.now();
 		}
-		let success = false;
-		const pds = [...possibleDegrees.values()].sort((a, b) => b - a);
+		let success: boolean = false;
+		const pds: number[] = [...possibleDegrees.values()].sort((a, b) => b - a);
 
 		for (const r of pds) {
 			if (r <= 0) continue;
@@ -91,7 +92,7 @@ export class FlexibleLayout {
 	}
 
 	#setWorstDegree(p: stlics.Problem, worstDesirability: number): boolean {
-		const res = this.#root.setWorstDegree(worstDesirability);
+		const res: boolean = this.#root.setWorstDegree(worstDesirability);
 		if (!res) {
 			console.log('Failure: initializeDomain');
 			return false;
@@ -107,9 +108,9 @@ export class FlexibleLayout {
 	}
 
 	#sortVariablesInBreadthFirstOrder(p: stlics.Problem): void {
-		const lens = stlics.averagePathLengths(p);
-		const vs   = [this.#root.getVariable()];
-		let ls = [this.#root];
+		const lens: number[] = stlics.averagePathLengths(p);
+		const vs: stlics.Variable[] = [this.#root.getVariable()];
+		let ls: FLayout[] = [this.#root];
 
 		while (ls.length > 0) {
 			const nls: FLayout[] = [];
@@ -133,16 +134,16 @@ export class FlexibleLayout {
 	}
 
 	#sortVariablesInCertainOrder(ls: FLayout[], lens: number[]): void {
-		ls.sort((l1, l2) => {
+		ls.sort((l1: FLayout, l2: FLayout): number => {
 			if (FlexibleLayout.SORT_BY_DESCENDANT) {
-				const ds1 = l1.getDescendantSize();
-				const ds2 = l2.getDescendantSize();
-				const r = ds2 - ds1;
+				const ds1: number = l1.getDescendantSize();
+				const ds2: number = l2.getDescendantSize();
+				const r: number = ds2 - ds1;
 				if (r !== 0) return r;
 			}
 			if (FlexibleLayout.SORT_BY_PATH_LENGTH) {
-				const len1 = lens[l1.getVariable().index()];
-				const len2 = lens[l2.getVariable().index()];
+				const len1: number = lens[l1.getVariable().index()];
+				const len2: number = lens[l2.getVariable().index()];
 				return len2 - len1;
 			}
 			return 0;

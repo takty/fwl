@@ -12,7 +12,7 @@ export class TopLabeling extends Layout {
 		super(owner, deg, Layout.VERTICAL);
 	}
 
-	name(): string {
+	override name(): string {
 		return 'top labeling';
 	}
 
@@ -23,8 +23,8 @@ export class TopLabeling extends Layout {
 	}
 
 	doLayout(children: FElement[], size: Size): void {
-		const le = children[0];
-		const ce = children[1];
+		const le: FElement = children[0];
+		const ce: FElement = children[1];
 		const ld: Size = le.getMinimumSize();
 		const cd: Size = ce.getMaximumSize();
 

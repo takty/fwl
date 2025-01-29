@@ -10,7 +10,7 @@ export class VerticalArray extends Layout {
 		super(owner, deg, Layout.VERTICAL);
 	}
 
-	name(): string {
+	override name(): string {
 		return 'vertical array';
 	}
 
