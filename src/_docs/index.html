@@ -1,11 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>FWL</title>
-	<script src="sample.ts" type="module"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="klales.min.css" />
+	<link rel="stylesheet" href="style.scss" />
+	<script src="index.ts" type="module"></script>
 </head>
-<body style="margin:0;padding:2rem;">
-	<p style="margin:0 0 2rem 0;">This is a demo of the Flexible Widget Layout. The display below represents a virtual window composed of multiple widgets. You can resize the window by dragging the handle at the bottom-right corner. When the window is resized, it will automatically re-layout.</p>
+
+<body>
+	<header>
+		<h1>FWL</h1>
+	</header>
+
+	<main>
+		<p>This is a demo of the Flexible Widget Layout. The display below represents a virtual window composed of
+			multiple widgets. You can resize the window by dragging the handle at the bottom-right corner. When the
+			window is resized, it will automatically re-layout.</p>
+
+		<div id="placeholder"></div>
+	</main>
+
+	<footer>
+		<nav><a href="https://takty.net/">takty.net</a></nav>
+	</footer>
 </body>
+
+</html>

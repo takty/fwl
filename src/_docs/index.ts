@@ -1,4 +1,12 @@
-import * as fwl from '../../dist/fwl.esm.js';
+/**
+ * Script for Sample
+ *
+ * @author Takuto Yanagida
+ * @version 2025-01-07
+ */
+
+import 'klales/klales.min.css';
+import * as fwl from '../../fwl';
 
 {
 	document.addEventListener('DOMContentLoaded', (): void => {
@@ -15,10 +23,12 @@ import * as fwl from '../../dist/fwl.esm.js';
 	const offscreenCanvas: HTMLCanvasElement = document.createElement('canvas');
 	const offscreenCtx: CanvasRenderingContext2D = offscreenCanvas.getContext('2d') as CanvasRenderingContext2D;
 
+	const ph = document.getElementById('placeholder') as HTMLDivElement;
+	const can: HTMLCanvasElement = document.createElement('canvas');
+	ph.appendChild(can);
+	can.style.border = '1px solid #0005';
+
 	function main(): void {
-		const can: HTMLCanvasElement = document.createElement('canvas');
-		document.body.appendChild(can);
-		can.style.border = '1px solid #0005';
 		can.width  = 400;
 		can.height = 560;
 
