@@ -48,10 +48,4 @@ export class FControl extends FElement {
 		return true;
 	}
 
-	addPossibleDegreesTo(dest: Set<number>): void {
-		for (const can of this._baseCans) {
-			(can as Control).addPossibleDegreesTo(dest);
-		}
-	}
-
 }

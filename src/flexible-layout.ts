@@ -48,8 +48,8 @@ export class FlexibleLayout {
 		this.#root.initializeProblem(p);
 		this.#sortVariablesInBreadthFirstOrder(p);
 
-		const pd = new Set<number>();
-		this.#root.addPossibleDegreesTo(pd);
+		this.#setWorstDegree(p, 0);
+		const pd: Set<number> = stlics.possibleDegreesOfProblem(p);
 		if (!this.#solveProblem(p, pd)) return false;
 
 		this.#root.setSize(this.#size.width, this.#size.height);
@@ -77,6 +77,7 @@ export class FlexibleLayout {
 			mon.setTimeLimit(100);
 
 			const solver = new stlics.FuzzyForwardChecking();
+			solver.setPrePruningDegree(r - Number.EPSILON);
 
 			if (solver.solve(p, mon)) {
 				success = true;

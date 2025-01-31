@@ -505,7 +505,7 @@ source-map-js@^1.2.1:
 
 "stlics@github:takty/stlics":
   version "1.0.0"
-  resolved "https://codeload.github.com/takty/stlics/tar.gz/ebfe995981281cf15e98ae413aeea1b6b637150b"
+  resolved "https://codeload.github.com/takty/stlics/tar.gz/810ed1c0be8854afb73466fd1062b6d403e10e60"
   dependencies:
     esbuild "^0.24.2"
     klales "github:takty/klales"

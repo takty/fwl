@@ -72,8 +72,6 @@ export abstract class FElement {
 
 	abstract initializeDomain(p: stlics.Problem): boolean;
 
-	abstract addPossibleDegreesTo(dest: Set<number>): void;
-
 	abstract setWorstDegree(deg: number): boolean;
 
 	#typeRelation(val: number): number {

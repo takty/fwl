@@ -18,10 +18,6 @@ export abstract class Control {
 		return this.#degree;
 	}
 
-	addPossibleDegreesTo(dest: Set<number>): void {
-		dest.add(this.#degree);
-	}
-
 	setMinimumSize(s: Size): void {
 		this.#minSize = { ...s };
 	}

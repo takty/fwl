@@ -175,16 +175,6 @@ export class FLayout extends FElement {
 		return true;
 	}
 
-	addPossibleDegreesTo(dest: Set<number>): void {
-		for (const can of this._baseCans) {
-			dest.add(can.getDegree());
-		}
-		for (const c of this.#children) {
-			c.addPossibleDegreesTo(dest);
-		}
-		dest.add(FLayout.SAME_DIRECTION);
-	}
-
 
 	// -------------------------------------------------------------------------
 
